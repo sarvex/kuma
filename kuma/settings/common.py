@@ -16,10 +16,8 @@ _Language = namedtuple(u'Language', u'english native iso639_1')
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 path = lambda *a: os.path.join(ROOT, *a)
-
-ROOT_PACKAGE = os.path.basename(ROOT)
 
 ADMINS = (
     ('MDN devs', 'mdn-dev@mozilla.com'),
@@ -85,62 +83,62 @@ LANGUAGE_CODE = 'en-US'
 
 # Accepted locales
 MDN_LANGUAGES = (
-                 'en-US',
-                 'af',
-                 'ar',
-                 'az',
-                 'bn-BD',
-                 'bn-IN',
-                 'cs',
-                 'ca',
-                 'de',
-                 'ee',
-                 'el',
-                 'es',
-                 'fa',
-                 'fi',
-                 'fr',
-                 'fy-NL',
-                 'ga-IE',
-                 'ha',
-                 'he',
-                 'hi-IN',
-                 'hr',
-                 'hu',
-                 'id',
-                 'ig',
-                 'it',
-                 'ja',
-                 'ka',
-                 'ko',
-                 'ln',
-                 'ml',
-                 'ms',
-                 'nl',
-                 'pl',
-                 'pt-BR',
-                 'pt-PT',
-                 'ro',
-                 'ru',
-                 'sq',
-                 'sw',
-                 'ta',
-                 'th',
-                 'tr',
-                 'vi',
-                 'wo',
-                 'xh',
-                 'yo',
-                 'zh-CN',
-                 'zh-TW',
-                 'zu',
+    'en-US',
+    'af',
+    'ar',
+    'az',
+    'bn-BD',
+    'bn-IN',
+    'cs',
+    'ca',
+    'de',
+    'ee',
+    'el',
+    'es',
+    'fa',
+    'fi',
+    'fr',
+    'fy-NL',
+    'ga-IE',
+    'ha',
+    'he',
+    'hi-IN',
+    'hr',
+    'hu',
+    'id',
+    'ig',
+    'it',
+    'ja',
+    'ka',
+    'ko',
+    'ln',
+    'ml',
+    'ms',
+    'nl',
+    'pl',
+    'pt-BR',
+    'pt-PT',
+    'ro',
+    'ru',
+    'sq',
+    'sw',
+    'ta',
+    'th',
+    'tr',
+    'vi',
+    'wo',
+    'xh',
+    'yo',
+    'zh-CN',
+    'zh-TW',
+    'zu',
 )
 
 RTL_LANGUAGES = (
-                 'ar',
-                 'fa',
-                 'fa-IR',
-                 'he'
+    'ar',
+    'fa',
+    'fa-IR',
+    'he'
 )
 
 DEV_POOTLE_PRODUCT_DETAILS_MAP = {
@@ -203,7 +201,7 @@ for requested_lang, delivered_lang in LOCALE_ALIASES.items():
 
 def get_locales():
     locales = {}
-    file = os.path.join(ROOT, 'kuma', 'languages.json')
+    file = path('kuma', 'languages.json')
     json_locales = json.load(open(file, 'r'))
     for locale, meta in json_locales.items():
         locales[locale] = _Language(meta['English'],
@@ -227,6 +225,7 @@ def lazy_langs():
 LANGUAGES_DICT = lazy(lazy_langs, dict)()
 LANGUAGES = sorted(tuple([(i, LOCALES[i].native) for i in MDN_LANGUAGES]),
                    key=lambda lang:lang[0])
+
 
 # DEKI uses different locale keys
 def lazy_language_deki_map():
@@ -272,36 +271,36 @@ LANGUAGE_DEKI_MAP = lazy(lazy_language_deki_map, dict)()
 # through the mapping exercise.
 
 MT_TO_KUMA_LOCALE_MAP = {
-    "en"    : "en-US",
-    "ja"    : "ja",
-    "pl"    : "pl",
-    "fr"    : "fr",
-    "es"    : "es",
-    ""      : "en-US",
-    "cn"    : "zh-CN",
-    "zh_cn" : "zh-CN",
-    "zh-cn" : "zh-CN",
-    "zh_tw" : "zh-TW",
-    "zh-tw" : "zh-TW",
-    "ko"    : "ko",
-    "pt"    : "pt-PT",
-    "de"    : "de",
-    "it"    : "it",
-    "ca"    : "ca",
-    "cs"    : "cs",
-    "ru"    : "ru",
-    "nl"    : "nl",
-    "hu"    : "hu",
-    "he"    : "he",
-    "el"    : "el",
-    "fi"    : "fi",
-    "tr"    : "tr",
-    "vi"    : "vi",
-    "ro"    : "ro",
-    "ar"    : "ar",
-    "th"    : "th",
-    "fa"    : "fa",
-    "ka"    : "ka",
+    "en": "en-US",
+    "ja": "ja",
+    "pl": "pl",
+    "fr": "fr",
+    "es": "es",
+    "": "en-US",
+    "cn": "zh-CN",
+    "zh_cn": "zh-CN",
+    "zh-cn": "zh-CN",
+    "zh_tw": "zh-TW",
+    "zh-tw": "zh-TW",
+    "ko": "ko",
+    "pt": "pt-PT",
+    "de": "de",
+    "it": "it",
+    "ca": "ca",
+    "cs": "cs",
+    "ru": "ru",
+    "nl": "nl",
+    "hu": "hu",
+    "he": "he",
+    "el": "el",
+    "fi": "fi",
+    "tr": "tr",
+    "vi": "vi",
+    "ro": "ro",
+    "ar": "ar",
+    "th": "th",
+    "fa": "fa",
+    "ka": "ka",
 }
 
 TEXT_DOMAIN = 'messages'
@@ -441,7 +440,7 @@ AVATAR_SIZE = 48  # in pixels
 ACCOUNT_ACTIVATION_DAYS = 30
 MAX_AVATAR_FILE_SIZE = 131072  # 100k, in bytes
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'kuma.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates"
@@ -591,7 +590,7 @@ DOMAIN_METHODS = {
 # http://github.com/jbalogh/zamboni/blob/d4c64239c24aa2f1e91276909823d1d1b290f0ee/settings.py#L254
 STANDALONE_DOMAINS = [
     'javascript',
-    ]
+]
 
 # If you have trouble extracting strings with Tower, try setting this
 # to True
@@ -902,33 +901,33 @@ CONSTANCE_DATABASE_CACHE_BACKEND = 'memcache'
 # Settings and defaults controllable by Constance in admin
 CONSTANCE_CONFIG = dict(
 
-    DEMO_BLACKLIST_OVERRIDE_EXTENSIONS = (
+    DEMO_BLACKLIST_OVERRIDE_EXTENSIONS=(
         'jsgz datagz memgz',
         'File extensions that override the mimetype blacklist in case of '
         'an ambigous mimetype such as application/gzip',
     ),
 
-    DEMO_MAX_ZIP_FILESIZE = (
+    DEMO_MAX_ZIP_FILESIZE=(
         60 * 1024 * 1024,
         "Max file size for zips uploaded to demo studio."
     ),
 
-    DEMO_MAX_FILESIZE_IN_ZIP = (
+    DEMO_MAX_FILESIZE_IN_ZIP=(
         60 * 1024 * 1024,
         "Max file size for files inside zip uploaded to demo studio."
     ),
 
-    DEMOS_DEVDERBY_CURRENT_CHALLENGE_TAG = (
+    DEMOS_DEVDERBY_CURRENT_CHALLENGE_TAG=(
         "challenge:2011:september",
         "Dev derby current challenge"
     ),
 
-    DEMOS_DEVDERBY_PREVIOUS_WINNER_TAG = (
+    DEMOS_DEVDERBY_PREVIOUS_WINNER_TAG=(
         "system:challenge:firstplace:2011:august",
         "Tag used to find most recent winner for dev derby"
     ),
 
-    DEMOS_DEVDERBY_CHALLENGE_CHOICE_TAGS = (
+    DEMOS_DEVDERBY_CHALLENGE_CHOICE_TAGS=(
         ' '.join([
             "challenge:2011:september",
             "challenge:2011:october",
@@ -937,7 +936,7 @@ CONSTANCE_CONFIG = dict(
         "Dev derby choices displayed on submission form (space-separated tags)"
     ),
 
-    DEMOS_DEVDERBY_PREVIOUS_CHALLENGE_TAGS = (
+    DEMOS_DEVDERBY_PREVIOUS_CHALLENGE_TAGS=(
         ' '.join([
             "challenge:2013:june",
             "challenge:2013:may",
@@ -968,58 +967,58 @@ CONSTANCE_CONFIG = dict(
         "Dev derby tags for previous challenges (space-separated tags)"
     ),
 
-    DEMOS_DEVDERBY_HOMEPAGE_FEATURED_DEMO = (
+    DEMOS_DEVDERBY_HOMEPAGE_FEATURED_DEMO=(
         0,
         'The ID of the demo which should be featured on the new homepage structure'
     ),
 
-    BASKET_RETRIES = (
+    BASKET_RETRIES=(
         5,
         'Number of time to retry basket post before giving up.'
     ),
-    BASKET_RETRY_WAIT = (
+    BASKET_RETRY_WAIT=(
         .5,
         'How long to wait between basket api request retries. '
         'We typically multiply this value by the retry number so, e.g., '
-        'the 4th retry waits 4*.5 = 2 seconds.'
+        'the 4th retry waits 4*.5=2 seconds.'
     ),
-    BASKET_API_KEY = (
+    BASKET_API_KEY=(
         '',
         'API Key to use for basket requests'
     ),
 
-    BETA_GROUP_NAME = (
+    BETA_GROUP_NAME=(
         'Beta Testers',
         'Name of the django.contrib.auth.models.Group to use as beta testers'
     ),
 
-    KUMA_DOCUMENT_RENDER_TIMEOUT = (
+    KUMA_DOCUMENT_RENDER_TIMEOUT=(
         180.0,
         'Maximum seconds to wait before considering a rendering in progress or '
         'scheduled as failed and allowing another attempt.'
     ),
-    KUMA_DOCUMENT_FORCE_DEFERRED_TIMEOUT = (
+    KUMA_DOCUMENT_FORCE_DEFERRED_TIMEOUT=(
         10.0,
         'Maximum seconds to allow a document to spend rendering during the '
         'response cycle before flagging it to be sent to the deferred rendering '
         'queue for future renders.'
     ),
 
-    KUMASCRIPT_TIMEOUT = (
+    KUMASCRIPT_TIMEOUT=(
         0.0,
         'Maximum seconds to wait for a response from the kumascript service. '
         'On timeout, the document gets served up as-is and without macro '
         'evaluation as an attempt at graceful failure. NOTE: a value of 0 '
         'disables kumascript altogether.'
     ),
-    KUMASCRIPT_MAX_AGE = (
+    KUMASCRIPT_MAX_AGE=(
         600,
         'Maximum acceptable age (in seconds) of a cached response from '
         'kumascript. Passed along in a Cache-Control: max-age={value} header, '
         'which tells kumascript whether or not to serve up a cached response.'
     ),
 
-    KUMA_CUSTOM_CSS_PATH = (
+    KUMA_CUSTOM_CSS_PATH=(
         '/en-US/docs/Template:CustomCSS',
         'Path to a wiki document whose raw content will be loaded as a CSS '
         'stylesheet for the wiki base template. Will also cause the ?raw '
@@ -1027,7 +1026,7 @@ CONSTANCE_CONFIG = dict(
         'value disables the feature altogether.',
     ),
 
-    KUMA_CUSTOM_SAMPLE_CSS_PATH = (
+    KUMA_CUSTOM_SAMPLE_CSS_PATH=(
         '/en-US/docs/Template:CustomSampleCSS',
         'Path to a wiki document whose raw content will be loaded as a CSS '
         'stylesheet for live sample template. Will also cause the ?raw '
@@ -1035,58 +1034,58 @@ CONSTANCE_CONFIG = dict(
         'value disables the feature altogether.',
     ),
 
-    DIFF_CONTEXT_LINES = (
+    DIFF_CONTEXT_LINES=(
         0,
         'Number of lines of context to show in diff display.',
     ),
 
-    FEED_DIFF_CONTEXT_LINES = (
+    FEED_DIFF_CONTEXT_LINES=(
         3,
         'Number of lines of context to show in feed diff display.',
     ),
 
-    WIKI_ATTACHMENT_ALLOWED_TYPES = (
+    WIKI_ATTACHMENT_ALLOWED_TYPES=(
         'image/gif image/jpeg image/png image/svg+xml text/html image/vnd.adobe.photoshop',
         'Allowed file types for wiki file attachments',
     ),
 
-    KUMA_WIKI_IFRAME_ALLOWED_HOSTS = (
+    KUMA_WIKI_IFRAME_ALLOWED_HOSTS=(
         '^https?\:\/\/(developer-local.allizom.org|developer-dev.allizom.org|developer.allizom.org|mozillademos.org|testserver|localhost\:8000|(www.)?youtube.com\/embed\/(\.*))',
         'Regex comprised of domain names that are allowed for IFRAME SRCs'
     ),
 
-    GOOGLE_ANALYTICS_ACCOUNT = (
+    GOOGLE_ANALYTICS_ACCOUNT=(
         '0',
         'Google Analytics Tracking Account Number (0 to disable)',
     ),
 
-    OPTIMIZELY_PROJECT_ID = (
+    OPTIMIZELY_PROJECT_ID=(
         '',
         'The ID value for optimizely Project Code script'
     ),
 
-    BLEACH_ALLOWED_TAGS = (
+    BLEACH_ALLOWED_TAGS=(
         json.dumps([
             'a', 'p', 'div',
         ]),
         "JSON array of tags allowed through Bleach",
     ),
 
-    BLEACH_ALLOWED_ATTRIBUTES = (
+    BLEACH_ALLOWED_ATTRIBUTES=(
         json.dumps({
             '*': ['id', 'class', 'style', 'lang'],
         }),
         "JSON object associating tags with lists of allowed attributes",
     ),
 
-    BLEACH_ALLOWED_STYLES = (
+    BLEACH_ALLOWED_STYLES=(
         json.dumps([
             'font-size', 'text-align',
         ]),
         "JSON array listing CSS styles allowed on tags",
     ),
 
-    WIKI_DOCUMENT_TAG_SUGGESTIONS = (
+    WIKI_DOCUMENT_TAG_SUGGESTIONS=(
         json.dumps([
             "Accessibility", "AJAX", "API", "Apps",
             "Canvas", "CSS", "Device", "DOM", "Events",
@@ -1102,7 +1101,7 @@ CONSTANCE_CONFIG = dict(
         "JSON array listing tag suggestions for documents"
     ),
 
-    SEARCH_FILTER_TAG_OPTIONS = (
+    SEARCH_FILTER_TAG_OPTIONS=(
         json.dumps([
             "Accessibility", "AJAX", "API", "Apps",
             "Canvas", "CSS", "Device", "DOM", "Events",
@@ -1118,17 +1117,17 @@ CONSTANCE_CONFIG = dict(
         "JSON array of tags that are enabled for search faceting"
     ),
 
-    SESSION_CLEANUP_CHUNK_SIZE = (
+    SESSION_CLEANUP_CHUNK_SIZE=(
         1000,
         'Number of expired sessions to cleanup up in one go.',
     ),
 
-    WELCOME_EMAIL_FROM = (
+    WELCOME_EMAIL_FROM=(
         "Janet Swisher <no-reply@mozilla.org>",
         'Email address from which welcome emails will be sent',
     ),
 
-    EMAIL_LIST_FOR_FIRST_EDITS = (
+    EMAIL_LIST_FOR_FIRST_EDITS=(
         "mdn-spam-watch@mozilla.com",
         "Email address to which emails will be sent for users' first edits",
     ),
@@ -1187,7 +1186,7 @@ LOGGING = {
             'propagate': True,
             'level': logging.ERROR,
         },
-        'django.request': {
+        'django': {
             'handlers': ['console'],
             'propagate': True,
             'level': logging.ERROR,
@@ -1212,13 +1211,17 @@ X_FRAME_OPTIONS = 'DENY'
 
 TEAMWORK_BASE_POLICIES = {
     'anonymous': (
-        'wiki.view_document',),
+        'wiki.view_document',
+    ),
     'authenticated': (
-        'wiki.view_document', 'wiki.add_document', 'wiki.add_revision'),
+        'wiki.view_document',
+        'wiki.add_document',
+        'wiki.add_revision',
+    ),
 }
 
 GRAPPELLI_ADMIN_TITLE = 'Mozilla Developer Network - Admin'
-GRAPPELLI_INDEX_DASHBOARD = 'admin_dashboard.CustomIndexDashboard'
+GRAPPELLI_INDEX_DASHBOARD = 'kuma.admin_dashboard.CustomIndexDashboard'
 
 DBGETTEXT_PATH = 'kuma/core/'
 DBGETTEXT_ROOT = 'translations'

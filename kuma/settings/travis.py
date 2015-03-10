@@ -1,4 +1,4 @@
-from settings_test import *
+from kuma.settings.common import *  # noqa
 
 ES_LIVE_INDEX = True
 ES_DISABLED = False

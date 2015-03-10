@@ -27,8 +27,7 @@ def user(save=False, **kwargs):
     password = kwargs.pop('password', 'password')
     user = User(**kwargs)
     user.set_password(password)
-    if save:
-        user.save()
+    user.save()
     return user
 
 
