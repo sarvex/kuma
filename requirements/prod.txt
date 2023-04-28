@@ -73,7 +73,7 @@ raven==3.3.12
 # -e git+https://github.com/sehmaschine/django-grappelli.git@95558ba99f656ba9bd0736e93317b280c05f4237#egg=django-grappelli
 django-grappelli==2.4.5
 # -e git+https://github.com/tomchristie/django-rest-framework.git@195790e60b117eff421eb8f04a9f9f3527e797b8#egg=django-rest-framework
-djangorestframework==2.3.8
+djangorestframework==3.11.2
 # -e git+https://github.com/jezdez/django-memcached-hashring.git@e66d2cd9255cb802428872360b7fc7071496c063#egg=django-memcached-hashring
 django-memcached-hashring==0.1.2
 # -e git+https://github.com/Doist/hash_ring.git@40e7a260eea6387bfa5855457ee85b7939ce6ab8#egg=hash_ring
