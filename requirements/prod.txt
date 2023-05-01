@@ -12,7 +12,7 @@ amqp==1.4.6
 anyjson==0.3.3
 beautifulsoup==3.2.1
 billiard==3.3.0.19
-celery==3.1.17
+celery==5.2.2
 django-celery==3.1.16
 django-threadedcomments==0.5.2
 feedparser==5.1.3
