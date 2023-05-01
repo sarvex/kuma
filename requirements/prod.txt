@@ -7,7 +7,7 @@ South==0.8.2
 
 ## Formerly vendor/packages
 Babel==0.9.6
-GitPython==0.1.7
+GitPython==3.1.30
 amqp==1.4.6
 anyjson==0.3.3
 beautifulsoup==3.2.1
