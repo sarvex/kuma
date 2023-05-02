@@ -1,7 +1,7 @@
 #
 # This pulls in requirements specific for development.
 
-Werkzeug==0.5.1
+Werkzeug==2.2.3
 ipython==8.10.0
 sqlparse==0.1.1
 selenium==1.0.1
