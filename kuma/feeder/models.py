@@ -65,7 +65,7 @@ class Feed(models.Model):
 
     def delete_old_entries(self):
         """Delete entries that exceed the amount we want to keep."""
-        if not self.keep > 0:
+        if self.keep <= 0:
             return
 
         to_delete = self.entries.order_by('-last_published')[self.keep:]
@@ -100,7 +100,7 @@ class Entry(models.Model):
         verbose_name_plural = 'Entries'
 
     def __unicode__(self):
-        return '%s: %s' % (self.feed.shortname, self.guid)
+        return f'{self.feed.shortname}: {self.guid}'
 
     @cached_property
     def parsed(self):

@@ -55,35 +55,102 @@ ALLOWED_ATTRIBUTES['font'] = ['color', 'face', 'size', 'dir']
 ALLOWED_ATTRIBUTES['select'] = ['name', 'dir']
 ALLOWED_ATTRIBUTES['option'] = ['value', 'selected', 'dir']
 ALLOWED_ATTRIBUTES['ol'] = ['style', 'class', 'id', 'lang', 'start', 'dir']
-ALLOWED_ATTRIBUTES.update(dict((x, ['style', 'class', 'id', 'name', 'lang',
-                                    'dir'])
-                          for x in
-                          ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')))
-ALLOWED_ATTRIBUTES.update(dict((x, ['style', 'class', 'id', 'lang', 'dir', 'title'])
-                               for x in (
-    'div', 'pre', 'ul', 'li', 'code', 'dl', 'dt', 'dd',
-    'section', 'header', 'footer', 'nav', 'article', 'aside', 'figure',
-    'dialog', 'hgroup', 'mark', 'time', 'meter', 'command', 'output',
-    'progress', 'audio', 'details', 'datagrid', 'datalist', 'table',
-    'tr', 'address', 'col', 's', 'strong'
-)))
-ALLOWED_ATTRIBUTES.update(dict((x, ['cite']) for x in (
-    'blockquote', 'del', 'ins', 'q'
-)))
+ALLOWED_ATTRIBUTES.update(
+    {
+        x: ['style', 'class', 'id', 'name', 'lang', 'dir']
+        for x in ('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
+    }
+)
+ALLOWED_ATTRIBUTES.update(
+    {
+        x: ['style', 'class', 'id', 'lang', 'dir', 'title']
+        for x in (
+            'div',
+            'pre',
+            'ul',
+            'li',
+            'code',
+            'dl',
+            'dt',
+            'dd',
+            'section',
+            'header',
+            'footer',
+            'nav',
+            'article',
+            'aside',
+            'figure',
+            'dialog',
+            'hgroup',
+            'mark',
+            'time',
+            'meter',
+            'command',
+            'output',
+            'progress',
+            'audio',
+            'details',
+            'datagrid',
+            'datalist',
+            'table',
+            'tr',
+            'address',
+            'col',
+            's',
+            'strong',
+        )
+    }
+)
+ALLOWED_ATTRIBUTES.update(
+    {x: ['cite'] for x in ('blockquote', 'del', 'ins', 'q')}
+)
 ALLOWED_ATTRIBUTES['li'] += ['data-default-state']
 ALLOWED_ATTRIBUTES['time'] += ['datetime']
 ALLOWED_ATTRIBUTES['ins'] = ['datetime']
 ALLOWED_ATTRIBUTES['del'] = ['datetime']
 # MathML
-ALLOWED_ATTRIBUTES.update(dict((x, ['encoding', 'src']) for x in (
-    'annotation', 'annotation-xml')))
-ALLOWED_ATTRIBUTES.update(dict((x, ['href', 'mathbackground', 'mathcolor',
-    'id', 'class', 'style']) for x in (
-    'math', 'maction', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph',
-    'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded',
-    'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle',
-    'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder',
-    'munderover', 'none', 'mprescripts')))
+ALLOWED_ATTRIBUTES.update(
+    {x: ['encoding', 'src'] for x in ('annotation', 'annotation-xml')}
+)
+ALLOWED_ATTRIBUTES.update(
+    {
+        x: ['href', 'mathbackground', 'mathcolor', 'id', 'class', 'style']
+        for x in (
+            'math',
+            'maction',
+            'menclose',
+            'merror',
+            'mfenced',
+            'mfrac',
+            'mglyph',
+            'mi',
+            'mlabeledtr',
+            'mmultiscripts',
+            'mn',
+            'mo',
+            'mover',
+            'mpadded',
+            'mphantom',
+            'mroot',
+            'mrow',
+            'ms',
+            'mspace',
+            'msqrt',
+            'mstyle',
+            'msub',
+            'msup',
+            'msubsup',
+            'mtable',
+            'mtd',
+            'mtext',
+            'mtr',
+            'munder',
+            'munderover',
+            'none',
+            'mprescripts',
+        )
+    }
+)
 ALLOWED_ATTRIBUTES['math'] += ['display', 'dir', 'selection', 'notation',
     'close', 'open', 'separators', 'bevelled', 'denomalign', 'linethickness',
     'numalign', 'largeop', 'maxsize', 'minsize', 'movablelimits', 'rspace',

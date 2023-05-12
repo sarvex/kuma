@@ -14,16 +14,18 @@ from tower import ugettext as _
 from kuma.core.urlresolvers import reverse
 from kuma.core.helpers import datetimeformat
 
-DEFAULT_AVATAR = getattr(settings, 'DEFAULT_AVATAR',
-                         settings.MEDIA_URL + 'img/avatar-default.png')
+DEFAULT_AVATAR = getattr(
+    settings, 'DEFAULT_AVATAR', f'{settings.MEDIA_URL}img/avatar-default.png'
+)
 
 
 @register.function
 def gravatar_url(user, secure=True, size=220, rating='pg',
                  default=DEFAULT_AVATAR):
     """Produce a gravatar image URL from email address."""
-    base_url = (secure and 'https://secure.gravatar.com' or
-                'http://www.gravatar.com')
+    base_url = (
+        'https://secure.gravatar.com' if secure else 'http://www.gravatar.com'
+    )
     email_hash = hashlib.md5(user.email.lower().encode('utf8'))
     params = urllib.urlencode({'s': size, 'd': default, 'r': rating})
     return '%(base_url)s/avatar/%(hash)s?%(params)s' % {
@@ -43,10 +45,10 @@ def ban_link(context, ban_user, banner_user):
             active_ban = ban_user.get_profile().active_ban()
             url = reverse('admin:users_userban_change', args=(active_ban.id,))
             title = _('Banned on {ban_date} by {ban_admin}.').format(ban_date=datetimeformat(context, active_ban.date, format='date', output='json'), ban_admin=active_ban.by )
-            link = '<a href="%s" class="button ban-link" title="%s">%s<i aria-hidden="true" class="icon-ban"></i></a>' % (url, title, _('Banned'))
+            link = f"""<a href="{url}" class="button ban-link" title="{title}">{_('Banned')}<i aria-hidden="true" class="icon-ban"></i></a>"""
         else:
-            url = '%s?user=%s&by=%s' % (reverse('admin:users_userban_add'), ban_user.id, banner_user.id)
-            link = '<a href="%s" class="button negative ban-link">%s<i aria-hidden="true" class="icon-ban"></i></a>' % (url, _('Ban User'))
+            url = f"{reverse('admin:users_userban_add')}?user={ban_user.id}&by={banner_user.id}"
+            link = f"""<a href="{url}" class="button negative ban-link">{_('Ban User')}<i aria-hidden="true" class="icon-ban"></i></a>"""
     return Markup(link)
 
 
@@ -56,19 +58,19 @@ def admin_link(context, user):
     """Returns a link to admin a user"""
     link = ''
     url = reverse('admin:auth_user_change', args=(user.id,))
-    link = '<a href="%s" class="button neutral">%s<i aria-hidden="true" class="icon-wrench"></i></a>' % (url, _('Admin'))
+    link = f"""<a href="{url}" class="button neutral">{_('Admin')}<i aria-hidden="true" class="icon-wrench"></i></a>"""
     return Markup(link)
 
 
 @register.filter
 def public_email(email):
     """Email address -> publicly displayable email."""
-    return Markup('<span class="email">%s</span>' % unicode_to_html(email))
+    return Markup(f'<span class="email">{unicode_to_html(email)}</span>')
 
 
 def unicode_to_html(text):
     """Turns all unicode into html entities, e.g. &#69; -> E."""
-    return ''.join([u'&#%s;' % ord(i) for i in text])
+    return ''.join([f'&#{ord(i)};' for i in text])
 
 
 @register.function
@@ -89,13 +91,11 @@ def provider_login_url(context, provider_id, **params):
     """
     request = context['request']
     provider = providers.registry.by_id(provider_id)
-    if 'next' not in params:
-        next = request.REQUEST.get('next')
-        if next:
-            params['next'] = next
-    else:
+    if 'next' in params:
         if not params['next']:
             del params['next']
+    elif next := request.REQUEST.get('next'):
+        params['next'] = next
     return Markup(provider.get_login_url(request, **params))
 
 

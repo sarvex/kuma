@@ -31,9 +31,7 @@ TEMPLATE_INCLUDE_CACHE_EXPIRES = getattr(settings,
 
 
 def new_context(context, **kw):
-    c = dict(context.items())
-    c.update(kw)
-    return c
+    return dict(context.items()) | kw
 
 
 # TODO:liberate ?
@@ -50,11 +48,7 @@ def register_cached_inclusion_tag(template, key_fn=None,
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kw):
-            if type(key_fn) is str:
-                cache_key = key_fn
-            else:
-                cache_key = key_fn(*args, **kw)
-
+            cache_key = key_fn if type(key_fn) is str else key_fn(*args, **kw)
             out = memcache.get(cache_key)
             if out is None:
                 context = f(*args, **kw)
@@ -64,6 +58,7 @@ def register_cached_inclusion_tag(template, key_fn=None,
             return out
 
         return register.function(wrapper)
+
     return decorator
 
 
@@ -72,9 +67,8 @@ def submission_key(prefix):
     the key based on a submission ID and last-modified timestamp."""
     def k(*args, **kw):
         submission = args[0]
-        return 'submission:%s:%s:%s' % (prefix,
-                                        submission.id,
-                                        submission.modified)
+        return f'submission:{prefix}:{submission.id}:{submission.modified}'
+
     return k
 
 
@@ -136,8 +130,7 @@ def submission_listing_cache_key(*args, **kw):
         memcache.set(DEMOS_CACHE_NS_KEY, ns_key)
     full_path = args[0].get_full_path()
     username = args[0].user.username
-    return 'demos_%s:%s' % (ns_key,
-        hashlib.md5(full_path + username).hexdigest())
+    return f'demos_{ns_key}:{hashlib.md5(full_path + username).hexdigest()}'
 
 
 @register_cached_inclusion_tag('demos/elements/submission_listing.html',
@@ -193,10 +186,7 @@ def tag_title(tag):
     if not tag:
         return ''
     name = (isinstance(tag, basestring)) and tag or tag.name
-    if name in TAG_DESCRIPTIONS:
-        return TAG_DESCRIPTIONS[name]['title']
-    else:
-        return name
+    return TAG_DESCRIPTIONS[name]['title'] if name in TAG_DESCRIPTIONS else name
 
 
 @register.function
@@ -236,8 +226,7 @@ def tag_meta(tag, other_name):
 
 @register.function
 def tags_for_object(obj):
-    tags = obj.taggit_tags.all()
-    return tags
+    return obj.taggit_tags.all()
 
 
 @register.function
@@ -258,10 +247,10 @@ def date_diff(timestamp, to=None):
     compare_with = to or datetime.date.today()
     delta = timestamp - compare_with
 
-    if delta.days == 0:
-        return u"today"
-    elif delta.days == -1:
+    if delta.days == -1:
         return u"yesterday"
+    elif delta.days == 0:
+        return u"today"
     elif delta.days == 1:
         return u"tomorrow"
 
@@ -272,17 +261,14 @@ def date_diff(timestamp, to=None):
         (1.0, lambda n: ungettext('day', 'days', n)),
     )
 
-    for i, (chunk, name) in enumerate(chunks):
+    for chunk, name in chunks:
         if abs(delta.days) >= chunk:
             count = abs(round(delta.days / chunk, 0))
             break
 
     date_str = (_('%(number)d %(type)s') % {'number': count, 'type': name(count)})
 
-    if delta.days > 0:
-        return "in " + date_str
-    else:
-        return date_str + " ago"
+    return f"in {date_str}" if delta.days > 0 else f"{date_str} ago"
 
 
 # TODO: Maybe just register the template tag functions in the jingo environment
@@ -382,7 +368,7 @@ def timesince(d, now=None):
     if since <= 0:
         # d is in the future compared to now, stop processing.
         return u''
-    for i, (seconds, name) in enumerate(chunks):
+    for seconds, name in chunks:
         count = since // seconds
         if count != 0:
             break

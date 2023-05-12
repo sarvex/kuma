@@ -43,10 +43,7 @@ class Command(NoArgsCommand):
         else:
             log.info('--force option set: Trying to fetch all known feeds.')
 
-        new_entry_count = 0
-        for feed in feeds:
-            new_entry_count += self.update_feed(feed, **options)
-
+        new_entry_count = sum(self.update_feed(feed, **options) for feed in feeds)
         log.info("Finished run in %f seconds for %d new entries" % (
             (time.time() - start), new_entry_count))
 

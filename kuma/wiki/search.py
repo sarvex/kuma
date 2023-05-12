@@ -220,11 +220,8 @@ class WikiDocumentType(document.DocType):
             'using': connections.get_connection(),
             'index': cls.get_index(),
             'doc_type': {cls._doc_type.name: cls.from_es},
-        }
-        options.update(kwargs)
-        sq = Search(**options)
-
-        return sq
+        } | kwargs
+        return Search(**options)
 
     @classmethod
     def get_model(cls):
@@ -243,10 +240,7 @@ class WikiDocumentType(document.DocType):
         """
         model = cls.get_model()
 
-        excludes = []
-        for exclude in cls.exclude_slugs:
-            excludes.append(Q(slug__icontains=exclude))
-
+        excludes = [Q(slug__icontains=exclude) for exclude in cls.exclude_slugs]
         qs = (model.objects
                    .filter(is_template=False,
                            is_redirect=False,
@@ -268,11 +262,12 @@ class WikiDocumentType(document.DocType):
         WARNING: This *must* mirror the logic of the ``get_indexable``
                  method above!
         """
-        return (not obj.is_template and
-                not obj.is_redirect and
-                not obj.deleted and
-                not any([exclude in obj.slug
-                         for exclude in cls.exclude_slugs]))
+        return (
+            not obj.is_template
+            and not obj.is_redirect
+            and not obj.deleted
+            and all(exclude not in obj.slug for exclude in cls.exclude_slugs)
+        )
 
     def get_excerpt(self):
         if getattr(self, 'highlight', False):
@@ -314,9 +309,12 @@ class WikiDocumentType(document.DocType):
                            for chunk in chunked(indexable, chunk_size)]
             chord_flow(pre_task, index_tasks, post_task).apply_async()
 
-        message = _(
+        return _(
             'Indexing {total} documents into {n} chunks of size {size} into '
-            'index {index}.'.format(total=total, n=total_chunks,
-                                    size=chunk_size,
-                                    index=index.prefixed_name))
-        return message
+            'index {index}.'.format(
+                total=total,
+                n=total_chunks,
+                size=chunk_size,
+                index=index.prefixed_name,
+            )
+        )

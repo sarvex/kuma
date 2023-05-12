@@ -54,15 +54,14 @@ def raw_file(request, attachment_id, filename):
     attachment = get_object_or_404(qs, pk=attachment_id)
     if attachment.current_revision is None:
         raise Http404
-    if request.get_host() == settings.ATTACHMENT_HOST:
-        rev = attachment.current_revision
-        resp = HttpResponse(rev.file.read(), mimetype=rev.mime_type)
-        resp['Last-Modified'] = convert_to_http_date(rev.created)
-        resp['Content-Length'] = rev.file.size
-        resp['X-Frame-Options'] = 'ALLOW-FROM: %s' % settings.DOMAIN
-        return resp
-    else:
+    if request.get_host() != settings.ATTACHMENT_HOST:
         return HttpResponsePermanentRedirect(attachment.get_file_url())
+    rev = attachment.current_revision
+    resp = HttpResponse(rev.file.read(), mimetype=rev.mime_type)
+    resp['Last-Modified'] = convert_to_http_date(rev.created)
+    resp['Content-Length'] = rev.file.size
+    resp['X-Frame-Options'] = f'ALLOW-FROM: {settings.DOMAIN}'
+    return resp
 
 
 def mindtouch_file_redirect(request, file_id, filename):
@@ -110,8 +109,7 @@ def new_attachment(request):
         raise PermissionDenied
 
     document = None
-    document_id = request.GET.get('document_id', None)
-    if document_id:
+    if document_id := request.GET.get('document_id', None):
         try:
             document = Document.objects.get(id=int(document_id))
         except (Document.DoesNotExist, ValueError):
@@ -137,22 +135,21 @@ def new_attachment(request):
                 {'result': json.dumps(attachments_json([attachment]))})
         else:
             return HttpResponseRedirect(attachment.get_absolute_url())
+    elif request.POST.get('is_ajax', ''):
+        allowed_list = constance.config.WIKI_ATTACHMENT_ALLOWED_TYPES.split()
+        allowed_types = ', '.join(map(guess_extension, allowed_list))
+        error_obj = {
+            'title': request.POST.get('is_ajax', ''),
+            'error': _(u'The file provided is not valid. '
+                       u'File must be one of these types: %s.') % allowed_types
+        }
+        response = render(
+            request,
+            'attachments/includes/attachment_upload_results.html',
+            {'result': json.dumps([error_obj])})
     else:
-        if request.POST.get('is_ajax', ''):
-            allowed_list = constance.config.WIKI_ATTACHMENT_ALLOWED_TYPES.split()
-            allowed_types = ', '.join(map(guess_extension, allowed_list))
-            error_obj = {
-                'title': request.POST.get('is_ajax', ''),
-                'error': _(u'The file provided is not valid. '
-                           u'File must be one of these types: %s.') % allowed_types
-            }
-            response = render(
-                request,
-                'attachments/includes/attachment_upload_results.html',
-                {'result': json.dumps([error_obj])})
-        else:
-            response = render(request, 'attachments/edit_attachment.html',
-                                    {'form': form})
+        response = render(request, 'attachments/edit_attachment.html',
+                                {'form': form})
     return response
 
 

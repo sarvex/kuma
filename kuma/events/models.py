@@ -35,9 +35,7 @@ def parse_header_line(header_line):
         if field[1] is None:
             try:
                 FIELD_MAP[field_name][1] = header_line.index(field[0])
-            except IndexError:
-                FIELD_MAP[field_name][1] = ''
-            except ValueError:
+            except (IndexError, ValueError):
                 FIELD_MAP[field_name][1] = ''
 
 
@@ -66,10 +64,7 @@ class Calendar(models.Model):
     def parse_row(cls, doc_row):
         row = {}
         for field_name, field in FIELD_MAP.items():
-            if len(doc_row) > field[1]:
-                field_value = doc_row[field[1]]
-            else:
-                field_value = ''
+            field_value = doc_row[field[1]] if len(doc_row) > field[1] else ''
             if len(field) >= 3 and callable(field[2]):
                 field_value = field[2](field_value)
             row[field_name] = field_value
@@ -96,7 +91,7 @@ class Calendar(models.Model):
         header_line = events.pop(0)
         parse_header_line(header_line)
 
-        today = datetime.today()
+        today = datetime.now()
 
         for event_line in events:
             event = None
@@ -147,4 +142,4 @@ class Event(models.Model):
         db_table = 'devmo_event'
 
     def __unicode__(self):
-        return '%s - %s, %s' % (self.date, self.conference, self.location)
+        return f'{self.date} - {self.conference}, {self.location}'

@@ -102,9 +102,7 @@ class NewsletterForm(forms.Form):
     def subscribe(self, request, email):
         subscription_details = self.get_subscription_details(email)
         if 'subscribe_needed' in self.cleaned_data:
-            optin = 'N'
-            if request.locale == 'en-US':
-                optin = 'Y'
+            optin = 'Y' if request.locale == 'en-US' else 'N'
             basket_data = {
                 'email': email,
                 'newsletters': settings.BASKET_APPS_NEWSLETTER,
@@ -165,8 +163,10 @@ class UserProfileEditForm(forms.ModelForm):
         # Dynamically add URLFields for all sites defined in the model.
         sites = kwargs.get('sites', UserProfile.website_choices)
         for name, meta in sites:
-            self.fields['websites_%s' % name] = forms.RegexField(regex=meta['regex'], required=False)
-            self.fields['websites_%s' % name].widget.attrs['placeholder'] = meta['prefix']
+            self.fields[f'websites_{name}'] = forms.RegexField(
+                regex=meta['regex'], required=False
+            )
+            self.fields[f'websites_{name}'].widget.attrs['placeholder'] = meta['prefix']
 
     def clean_expertise(self):
         """Enforce expertise as a subset of interests"""
@@ -174,7 +174,7 @@ class UserProfileEditForm(forms.ModelForm):
         interests = set(parse_tags(self.cleaned_data.get('interests', '')))
         expertise = set(parse_tags(self.cleaned_data['expertise']))
 
-        if len(expertise) > 0 and not expertise.issubset(interests):
+        if expertise and not expertise.issubset(interests):
             raise forms.ValidationError(_("Areas of expertise must be a "
                                           "subset of interests"))
 

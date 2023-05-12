@@ -51,10 +51,16 @@ THUMBNAIL_MAXH = getattr(settings, 'DEMO_THUMBNAIL_MAX_HEIGHT', 150)
 # Set up a file system for demo uploads that can be kept separate from the rest
 # of /media if necessary. Lots of hackery here to ensure a set of sensible
 # defaults are tried.
-DEMO_UPLOADS_ROOT = getattr(settings, 'DEMO_UPLOADS_ROOT',
-    '%s/uploads/demos' % getattr(settings, 'MEDIA_ROOT', 'media'))
-DEMO_UPLOADS_URL = getattr(settings, 'DEMO_UPLOADS_URL',
-    '%s/uploads/demos' % getattr(settings, 'MEDIA_URL', '/media'))
+DEMO_UPLOADS_ROOT = getattr(
+    settings,
+    'DEMO_UPLOADS_ROOT',
+    f"{getattr(settings, 'MEDIA_ROOT', 'media')}/uploads/demos",
+)
+DEMO_UPLOADS_URL = getattr(
+    settings,
+    'DEMO_UPLOADS_URL',
+    f"{getattr(settings, 'MEDIA_URL', '/media')}/uploads/demos",
+)
 demo_uploads_fs = FileSystemStorage(location=DEMO_UPLOADS_ROOT, base_url=DEMO_UPLOADS_URL)
 
 DEMO_MIMETYPE_BLACKLIST = getattr(settings, 'DEMO_FILETYPE_BLACKLIST', [
@@ -238,9 +244,7 @@ class ReplacingImageWithThumbFieldFile(ImageFieldFile):
         return ''.join((parts[0], '_thumb', '.', parts[1]))
 
     def delete(self, save=True):
-        # Delete any associated thumbnail image before deleting primary
-        t_name = self.thumbnail_name()
-        if t_name:
+        if t_name := self.thumbnail_name():
             self.storage.delete(t_name)
         return super(ImageFieldFile, self).delete(save)
 
@@ -248,9 +252,7 @@ class ReplacingImageWithThumbFieldFile(ImageFieldFile):
         new_filename = generate_filename_and_delete_previous(self, name)
         super(ImageFieldFile, self).save(new_filename, content, save)
 
-        # Create associated scaled thumbnail image
-        t_name = self.thumbnail_name()
-        if t_name:
+        if t_name := self.thumbnail_name():
             thumb_file = scale_image(self.storage.open(new_filename),
                     (self.field.thumb_max_width, self.field.thumb_max_height))
             self.storage.save(t_name, thumb_file)
@@ -331,26 +333,18 @@ class SubmissionManager(models.Manager):
         for term in terms:
             or_query = None # Query to search for a given term in each field
             for field_name in search_fields:
-                q = Q(**{"%s__icontains" % field_name: term})
-                if or_query is None:
-                    or_query = q
-                else:
-                    or_query = or_query | q
-            if query is None:
-                query = or_query
-            else:
-                query = query & or_query
+                q = Q(**{f"{field_name}__icontains": term})
+                or_query = q if or_query is None else or_query | q
+            query = or_query if query is None else query & or_query
         return query
 
     def search(self, query_string, sort):
         """Quick and dirty keyword search on submissions"""
-        # TODO: Someday, replace this with a real search engine
-        strip_qs = query_string.strip()
-        if not strip_qs:
-            return self.all_sorted(sort).order_by('-modified')
-        else:
+        if strip_qs := query_string.strip():
             query = self._get_query(strip_qs, ['title', 'summary', 'description'])
             return self.all_sorted(sort).filter(query).order_by('-modified')
+        else:
+            return self.all_sorted(sort).order_by('-modified')
 
     def all_sorted(self, sort=None):
         """Apply to .all() one of the sort orders supported for views"""
@@ -513,11 +507,8 @@ class Submission(models.Model):
         Try to generate a unique 50-character slug.
 
         """
-        if self.slug:
-            slug = self.slug[:50]
-        else:
-            slug = slugify(self.title)[:50]
-        using = kwargs['using'] if 'using' in kwargs else 'default'
+        slug = self.slug[:50] if self.slug else slugify(self.title)[:50]
+        using = kwargs.get('using', 'default')
         existing = Submission.objects.using(using).filter(slug=slug)
         if (not existing) or (self.id and self.id in [s.id for s in existing]):
             return slug
@@ -555,23 +546,21 @@ class Submission(models.Model):
     def next(self):
         """Find the next submission by created time, return None if not found."""
         try:
-            obj = self.get_next_by_created(hidden=False)
-            return obj
+            return self.get_next_by_created(hidden=False)
         except Submission.DoesNotExist:
             return None
 
     def previous(self):
         """Find the previous submission by created time, return None if not found."""
         try:
-            obj = self.get_previous_by_created(hidden=False)
-            return obj
+            return self.get_previous_by_created(hidden=False)
         except Submission.DoesNotExist:
             return None
 
     def screenshot_url(self, index='1'):
         """Fetch the screenshot URL for a given index, swallowing errors"""
         try:
-            return getattr(self, 'screenshot_%s' % index).url
+            return getattr(self, f'screenshot_{index}').url
         except:
             return ''
 
@@ -579,7 +568,7 @@ class Submission(models.Model):
         """Fetch the screenshot thumbnail URL for a given index, swallowing
         errors"""
         try:
-            return getattr(self, 'screenshot_%s' % index).thumbnail_url()
+            return getattr(self, f'screenshot_{index}').thumbnail_url()
         except:
             return ''
 
@@ -597,7 +586,7 @@ class Submission(models.Model):
 
         or_queries = []
         for tag_flag in tag_flags:
-            term = 'system:challenge:%s:' % tag_flag
+            term = f'system:challenge:{tag_flag}:'
             or_queries.append(Q(**{'name__startswith': term}))
 
         for tag in self.taggit_tags.filter(reduce(operator.or_, or_queries)):
@@ -622,14 +611,10 @@ class Submission(models.Model):
 
     @classmethod
     def allows_listing_hidden_by(cls, user):
-        if user.is_staff or user.is_superuser:
-            return True
-        return False
+        return bool(user.is_staff or user.is_superuser)
 
     def allows_hiding_by(self, user):
-        if user.is_staff or user.is_superuser or user == self.creator:
-            return True
-        return False
+        return bool(user.is_staff or user.is_superuser or user == self.creator)
 
     def allows_viewing_by(self, user):
         if not self.censored:
@@ -640,23 +625,23 @@ class Submission(models.Model):
         return False
 
     def allows_editing_by(self, user):
-        if user.is_staff or user.is_superuser or user == self.creator:
-            return True
-        return False
+        return bool(user.is_staff or user.is_superuser or user == self.creator)
 
     def allows_deletion_by(self, user):
-        if user.is_staff or user.is_superuser or user == self.creator:
-            return True
-        return False
+        return bool(user.is_staff or user.is_superuser or user == self.creator)
 
     @classmethod
     def get_valid_demo_zipfile_entries(cls, zf):
         """Filter a ZIP file's entries for only accepted entries"""
         # TODO: Move to zip file field?
-        return [x for x in zf.infolist() if
-            not (x.filename.startswith('/') or '/..' in x.filename) and
-            not (basename(x.filename).startswith('.')) and
-            x.file_size > 0]
+        return [
+            x
+            for x in zf.infolist()
+            if not x.filename.startswith('/')
+            and '/..' not in x.filename
+            and not (basename(x.filename).startswith('.'))
+            and x.file_size > 0
+        ]
 
     @classmethod
     def validate_demo_zipfile(cls, file):
@@ -683,7 +668,7 @@ class Submission(models.Model):
 
             # HACK: We're accepting {index,demo}.html as the root index and
             # normalizing on unpack
-            if 'index.html' == name or 'demo.html' == name:
+            if name in ['index.html', 'demo.html']:
                 index_found = True
 
             if zi.file_size > constance.config.DEMO_MAX_FILESIZE_IN_ZIP:
@@ -697,8 +682,7 @@ class Submission(models.Model):
             file_mime_type = m_mime.from_buffer(file_data).split(';')[0]
 
             extensions = constance.config.DEMO_BLACKLIST_OVERRIDE_EXTENSIONS.split()
-            override_file_extensions = ['.%s' % extension
-                                       for extension in extensions]
+            override_file_extensions = [f'.{extension}' for extension in extensions]
 
             if (file_mime_type in DEMO_MIMETYPE_BLACKLIST and
                     not name.endswith(tuple(override_file_extensions))):

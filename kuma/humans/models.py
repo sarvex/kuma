@@ -40,11 +40,7 @@ class HumansTXT(object):
         target.write('\n')
 
     def get_github(self, data=None):
-        if not data:
-            raw_data = json.load(urllib.urlopen(GITHUB_REPOS))
-        else:
-            raw_data = data
-
+        raw_data = json.load(urllib.urlopen(GITHUB_REPOS)) if not data else data
         humans = []
         for contributor in raw_data:
             human = Human()

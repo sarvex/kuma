@@ -23,11 +23,9 @@ class Migration(DataMigration):
             tags = parse_tags(demo.tags)
             # HACK: South gets confused by taggit_tags field, so we have to conjure it up here
             taggit_tags = _TaggableManager(through=TaggedItem, model=orm.Submission, instance=demo)
-            taggit_tags.set(*(
-                'tech:%s' % ( x )
-                for x in tags
-                if x in self.KNOWN_TECH_TAGS
-            ))
+            taggit_tags.set(
+                *(f'tech:{x}' for x in tags if x in self.KNOWN_TECH_TAGS)
+            )
             # Could destroy the data, but why bother?
             # demo.tags = ''
             demo.save()

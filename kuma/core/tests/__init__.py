@@ -79,8 +79,9 @@ class override_constance_settings(overrider):
     def enable(self):
         self.old_cache = constance_database.db_cache
         constance_database.db_cache = None
-        self.old_settings = dict((k, getattr(constance.config, k))
-                                 for k in dir(constance.config))
+        self.old_settings = {
+            k: getattr(constance.config, k) for k in dir(constance.config)
+        }
         for k, v in self.options.items():
             constance.config._backend.set(k, v)
 
@@ -132,14 +133,12 @@ class SessionAwareClient(Client):
         """
         if 'django.contrib.sessions' in settings.INSTALLED_APPS:
             engine = import_module(settings.SESSION_ENGINE)
-            cookie = self.cookies.get(settings.SESSION_COOKIE_NAME, None)
-            if cookie:
+            if cookie := self.cookies.get(settings.SESSION_COOKIE_NAME, None):
                 return engine.SessionStore(cookie.value)
-            else:
-                session = engine.SessionStore()
-                session.save()
-                self.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
-                return session
+            session = engine.SessionStore()
+            session.save()
+            self.cookies[settings.SESSION_COOKIE_NAME] = session.session_key
+            return session
         return {}
     session = property(_session)
 
@@ -151,8 +150,7 @@ class LocalizingMixin(object):
         path = request.get('PATH_INFO', self.defaults.get('PATH_INFO', '/'))
         locale, shortened = split_path(path)
         if not locale:
-            request['PATH_INFO'] = '/%s/%s' % (settings.LANGUAGE_CODE,
-                                               shortened)
+            request['PATH_INFO'] = f'/{settings.LANGUAGE_CODE}/{shortened}'
         return super(LocalizingMixin, self).request(**request)
 
 

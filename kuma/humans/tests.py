@@ -10,7 +10,7 @@ from django.test import TestCase
 from .models import HumansTXT, Human
 
 APP_DIR = dirname(__file__)
-CONTRIBUTORS_JSON = "%s/fixtures/contributors.json" % APP_DIR
+CONTRIBUTORS_JSON = f"{APP_DIR}/fixtures/contributors.json"
 
 
 class HumansTest(TestCase):
@@ -44,10 +44,10 @@ class HumansTest(TestCase):
         assert_equal(human.name, "chengwang")
 
     def test_write_to_file(self):
-        if not isdir("%s/tmp/" % APP_DIR):
-            makedirs("%s/tmp/" % APP_DIR)
+        if not isdir(f"{APP_DIR}/tmp/"):
+            makedirs(f"{APP_DIR}/tmp/")
 
-        target = open("%s/tmp/humans.txt" % APP_DIR, 'w')
+        target = open(f"{APP_DIR}/tmp/humans.txt", 'w')
         human1 = Human()
         human1.name = "joe"
         human1.website = "http://example.com"
@@ -55,22 +55,19 @@ class HumansTest(TestCase):
         human2 = Human()
         human2.name = "john"
 
-        humans = []
-        humans.append(human1)
-        humans.append(human2)
-
+        humans = [human1, human2]
         ht = HumansTXT()
         ht.write_to_file(humans, target, "Banner Message", "Developer")
 
-        ok_(True, exists("%s/tmp/humans.txt" % APP_DIR))
+        ok_(True, exists(f"{APP_DIR}/tmp/humans.txt"))
 
         message = False
         name = False
 
-        for line in fileinput.input("%s/tmp/humans.txt" % APP_DIR):
+        for line in fileinput.input(f"{APP_DIR}/tmp/humans.txt"):
             if line == "Banner Message":
                 message = True
-            if line == "joe":
+            elif line == "joe":
                 name = True
 
         ok_(True, message)

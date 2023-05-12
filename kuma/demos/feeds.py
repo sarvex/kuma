@@ -35,30 +35,42 @@ class SubmissionJSONFeedGenerator(SyndicationFeed):
 
         # Check for a callback param, validate it before use
         callback = request.GET.get('callback', None)
-        if callback is not None:
-            if not valid_jsonp_callback_value(callback):
-                callback = None
+        if callback is not None and not valid_jsonp_callback_value(callback):
+            callback = None
 
         items_out = []
         for item in self.items:
 
             # Include some of the simple elements from the preprocessed feed item
-            item_out = dict( (x, item[x]) for x in (
-                'link', 'title', 'pubdate', 'author_name', 'author_link',
-            ))
+            item_out = {
+                x: item[x]
+                for x in (
+                    'link',
+                    'title',
+                    'pubdate',
+                    'author_name',
+                    'author_link',
+                )
+            }
 
             item_out['author_avatar'] = item['obj'].creator.get_profile().gravatar
 
             # Linkify the tags used in the feed item
-            item_out['categories'] = dict(
-                (x, request.build_absolute_uri(reverse('demos_tag', kwargs={'tag':x})))
+            item_out['categories'] = {
+                x: request.build_absolute_uri(
+                    reverse('demos_tag', kwargs={'tag': x})
+                )
                 for x in item['categories']
-            )
+            }
 
             # Include a few more, raw from the submission object itself.
-            item_out.update( (x, unicode(getattr(item['obj'], x))) for x in (
-                'summary', 'description',
-            ))
+            item_out |= (
+                (x, unicode(getattr(item['obj'], x)))
+                for x in (
+                    'summary',
+                    'description',
+                )
+            )
 
             item_out['featured'] = item['obj'].featured
 
@@ -77,7 +89,8 @@ class SubmissionJSONFeedGenerator(SyndicationFeed):
 
         data = items_out
 
-        if callback: outfile.write('%s(' % callback)
+        if callback:
+            outfile.write(f'{callback}(')
         outfile.write(json.dumps(data, default=self._encode_complex))
         if callback: outfile.write(')')
 
@@ -119,7 +132,7 @@ class SubmissionsFeed(Feed):
         )
 
     def item_author_name(self, submission):
-        return '%s' % submission.creator
+        return f'{submission.creator}'
 
     def item_author_link(self, submission):
         return self.request.build_absolute_uri(
@@ -154,10 +167,11 @@ class RecentSubmissionsFeed(SubmissionsFeed):
     subtitle = _('Demos recently submitted to MDN')
 
     def items(self):
-        submissions = Submission.objects\
-            .exclude(hidden=True)\
-            .order_by('-modified').all()[:MAX_FEED_ITEMS]
-        return submissions
+        return (
+            Submission.objects.exclude(hidden=True)
+            .order_by('-modified')
+            .all()[:MAX_FEED_ITEMS]
+        )
 
 
 class FeaturedSubmissionsFeed(SubmissionsFeed):
@@ -166,10 +180,12 @@ class FeaturedSubmissionsFeed(SubmissionsFeed):
     subtitle = _('Demos featured on MDN')
 
     def items(self):
-        submissions = Submission.objects.filter(featured=True)\
-            .exclude(hidden=True)\
-            .order_by('-modified').all()[:MAX_FEED_ITEMS]
-        return submissions
+        return (
+            Submission.objects.filter(featured=True)
+            .exclude(hidden=True)
+            .order_by('-modified')
+            .all()[:MAX_FEED_ITEMS]
+        )
 
 
 class TagSubmissionsFeed(SubmissionsFeed):
@@ -200,10 +216,12 @@ class ProfileSubmissionsFeed(SubmissionsFeed):
         return user
 
     def items(self, user):
-        submissions = Submission.objects.filter(creator=user)\
-            .exclude(hidden=True)\
-            .order_by('-modified').all()[:MAX_FEED_ITEMS]
-        return submissions
+        return (
+            Submission.objects.filter(creator=user)
+            .exclude(hidden=True)
+            .order_by('-modified')
+            .all()[:MAX_FEED_ITEMS]
+        )
 
 
 class SearchSubmissionsFeed(SubmissionsFeed):
@@ -216,7 +234,9 @@ class SearchSubmissionsFeed(SubmissionsFeed):
         return query_string
 
     def items(self, query_string):
-        submissions = Submission.objects.search(query_string, 'created')\
-            .exclude(hidden=True)\
-            .order_by('-modified').all()[:MAX_FEED_ITEMS]
-        return submissions
+        return (
+            Submission.objects.search(query_string, 'created')
+            .exclude(hidden=True)
+            .order_by('-modified')
+            .all()[:MAX_FEED_ITEMS]
+        )

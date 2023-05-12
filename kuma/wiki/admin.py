@@ -15,9 +15,9 @@ from .models import (Document, DocumentZone, DocumentTag,
 
 
 def dump_selected_documents(self, request, queryset):
-    filename = "documents_%s.json" % (datetime.now().isoformat(),)
+    filename = f"documents_{datetime.now().isoformat()}.json"
     response = HttpResponse(mimetype="text/plain")
-    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    response['Content-Disposition'] = f'attachment; filename={filename}'
     Document.objects.dump_json(queryset, response)
     return response
 
@@ -53,7 +53,7 @@ def purge_view(request):
             for doc in to_purge:
                 doc.purge()
                 purged += 1
-            messages.info(request, "%s document(s) were purged." % purged)
+            messages.info(request, f"{purged} document(s) were purged.")
         return HttpResponseRedirect('/admin/wiki/document/')
     return TemplateResponse(request,
                             'admin/wiki/purge_documents.html',
@@ -67,16 +67,19 @@ undelete_documents.short_description = "Undelete deleted documents"
 
 def enable_deferred_rendering_for_documents(self, request, queryset):
     queryset.update(defer_rendering=True)
-    self.message_user(request, 'Enabled deferred rendering for %s Documents' %
-                               queryset.count())
+    self.message_user(
+        request, f'Enabled deferred rendering for {queryset.count()} Documents'
+    )
 enable_deferred_rendering_for_documents.short_description = (
     "Enable deferred rendering for selected documents")
 
 
 def disable_deferred_rendering_for_documents(self, request, queryset):
     queryset.update(defer_rendering=False)
-    self.message_user(request, 'Disabled deferred rendering for %s Documents' %
-                               queryset.count())
+    self.message_user(
+        request,
+        f'Disabled deferred rendering for {queryset.count()} Documents',
+    )
 disable_deferred_rendering_for_documents.short_description = (
     "Disable deferred rendering for selected documents")
 
@@ -89,7 +92,6 @@ def force_render_documents(self, request, queryset):
             count += 1
         except:
             bad_count += 1
-            pass
     self.message_user(request, "Rendered %s documents, failed on %s "
                                "documents." % (count, bad_count))
 force_render_documents.short_description = (
@@ -116,11 +118,11 @@ def related_revisions_link(self):
     """HTML link to related revisions for admin change list"""
     link = '%s?%s' % (
         reverse('admin:wiki_revision_changelist', args=[]),
-        'document__exact=%s' % (self.id)
+        f'document__exact={self.id}',
     )
     count = self.revisions.count()
-    what = (count == 1) and 'revision' or 'revisions'
-    return '<a href="%s">%s&nbsp;%s</a>' % (link, count, what)
+    what = 'revision' if count == 1 else 'revisions'
+    return f'<a href="{link}">{count}&nbsp;{what}</a>'
 
 related_revisions_link.allow_tags = True
 related_revisions_link.short_description = "All Revisions"
@@ -132,7 +134,7 @@ def current_revision_link(self):
         return "None"
     rev = self.current_revision
     rev_url = reverse('admin:wiki_revision_change', args=[rev.id])
-    return '<a href="%s">Current&nbsp;Revision&nbsp;(#%s)</a>' % (rev_url, rev.id)
+    return f'<a href="{rev_url}">Current&nbsp;Revision&nbsp;(#{rev.id})</a>'
 
 current_revision_link.allow_tags = True
 current_revision_link.short_description = "Current Revision"
@@ -143,7 +145,7 @@ def parent_document_link(self):
     if not self.parent:
         return ''
     url = reverse('admin:wiki_document_change', args=[self.parent.id])
-    return '<a href="%s">Translated&nbsp;from&nbsp;(#%s)</a>' % (url, self.parent.id)
+    return f'<a href="{url}">Translated&nbsp;from&nbsp;(#{self.parent.id})</a>'
 
 parent_document_link.allow_tags = True
 parent_document_link.short_description = "Translation Parent"
@@ -155,7 +157,7 @@ def topic_parent_document_link(self):
         return ''
     url = reverse('admin:wiki_document_change',
                   args=[self.parent_topic.id])
-    return '<a href="%s">Topic&nbsp;Parent&nbsp;(#%s)</a>' % (url, self.parent_topic.id)
+    return f'<a href="{url}">Topic&nbsp;Parent&nbsp;(#{self.parent_topic.id})</a>'
 
 topic_parent_document_link.allow_tags = True
 topic_parent_document_link.short_description = "Parent Document"
@@ -168,10 +170,10 @@ def topic_children_documents_link(self):
         return ''
     link = '%s?%s' % (
         reverse('admin:wiki_document_changelist', args=[]),
-        'parent_topic__exact=%s' % (self.id)
+        f'parent_topic__exact={self.id}',
     )
-    what = (count == 1) and 'child' or 'children'
-    return '<a href="%s">%s&nbsp;%s</a>' % (link, count, what)
+    what = 'child' if count == 1 else 'children'
+    return f'<a href="{link}">{count}&nbsp;{what}</a>'
 
 topic_children_documents_link.allow_tags = True
 topic_children_documents_link.short_description = "Child Documents"
@@ -184,10 +186,10 @@ def topic_sibling_documents_link(self):
         return ''
     link = '%s?%s' % (
         reverse('admin:wiki_document_changelist', args=[]),
-        'parent_topic__exact=%s' % (self.parent_topic.id)
+        f'parent_topic__exact={self.parent_topic.id}',
     )
-    what = (count == 1) and 'sibling' or 'siblings'
-    return '<a href="%s">%s&nbsp;%s</a>' % (link, count, what)
+    what = 'sibling' if count == 1 else 'siblings'
+    return f'<a href="{link}">{count}&nbsp;{what}</a>'
 
 topic_sibling_documents_link.allow_tags = True
 topic_sibling_documents_link.short_description = "Sibling Documents"
@@ -207,7 +209,7 @@ document_link.short_description = "Public"
 def combine_funcs(self, funcs):
     """Combine several field functions into one block of lines"""
     out = (x(self) for x in funcs)
-    return '<ul>%s</ul>' % ''.join('<li>%s</li>' % x for x in out if x)
+    return f"<ul>{''.join(f'<li>{x}</li>' for x in out if x)}</ul>"
 
 
 def document_nav_links(self):
@@ -236,13 +238,20 @@ revision_links.short_description = "Revisions"
 
 def rendering_info(self):
     """Combine the rendering times into one block"""
-    return '<ul>%s</ul>' % ''.join('<li>%s</li>' % (x % y) for x, y in (
-        ('<img src="/admin-media/img/admin/icon-yes.gif" alt="%s"> '
-         'Deferred rendering', self.defer_rendering),
-        ('%s (last)',        self.last_rendered_at),
-        ('%s (started)',     self.render_started_at),
-        ('%s (scheduled)',   self.render_scheduled_at),
-    ) if y)
+    return '<ul>%s</ul>' % ''.join(
+        f'<li>{x % y}</li>'
+        for x, y in (
+            (
+                '<img src="/admin-media/img/admin/icon-yes.gif" alt="%s"> '
+                'Deferred rendering',
+                self.defer_rendering,
+            ),
+            ('%s (last)', self.last_rendered_at),
+            ('%s (started)', self.render_started_at),
+            ('%s (scheduled)', self.render_scheduled_at),
+        )
+        if y
+    )
 
 rendering_info.allow_tags = True
 rendering_info.short_description = 'Rendering'
@@ -308,11 +317,7 @@ class DocumentAdmin(admin.ModelAdmin):
 
         """
         qs = Document.admin_objects.all()
-        # TODO: When we're on a Django version that handles admin
-        # queryset ordering in a better way, we can stop doing this
-        # part.
-        ordering = self.get_ordering(request)
-        if ordering:
+        if ordering := self.get_ordering(request):
             qs = qs.order_by(*ordering)
         return qs
 

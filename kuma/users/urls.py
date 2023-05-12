@@ -39,11 +39,10 @@ users_patterns = patterns('',
 
 for provider in providers.registry.get_list():
     try:
-        prov_mod = importlib.import_module(provider.package + '.urls')
+        prov_mod = importlib.import_module(f'{provider.package}.urls')
     except ImportError:
         continue
-    prov_urlpatterns = getattr(prov_mod, 'urlpatterns', None)
-    if prov_urlpatterns:
+    if prov_urlpatterns := getattr(prov_mod, 'urlpatterns', None):
         users_patterns += prov_urlpatterns
 
 

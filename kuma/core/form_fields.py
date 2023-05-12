@@ -23,8 +23,7 @@ class StrippedCharField(forms.CharField):
         to_remove = []
         for validator in self.validators:
             class_name = validator.__class__.__name__
-            if class_name == 'MinLengthValidator' or \
-               class_name == 'MaxLengthValidator':
+            if class_name in ['MinLengthValidator', 'MaxLengthValidator']:
                 to_remove.append(validator)
         for validator in to_remove:
             self.validators.remove(validator)

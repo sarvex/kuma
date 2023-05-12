@@ -68,11 +68,9 @@ class AnonymousIdentity(object):
             # No getpid() in Jython, for example
             pid = 1
 
-        anon_id = md5_constructor("%s%s%s%s"
-                                  % (randrange(0, MAX_ANONYMOUS_ID),
-                                     pid, time.time(),
-                                     settings.SECRET_KEY)).hexdigest()
-        return anon_id
+        return md5_constructor(
+            f"{randrange(0, MAX_ANONYMOUS_ID)}{pid}{time.time()}{settings.SECRET_KEY}"
+        ).hexdigest()
 
 
 class AnonymousIdentityMiddleware(object):

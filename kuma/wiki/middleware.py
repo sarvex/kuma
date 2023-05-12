@@ -33,7 +33,7 @@ class DocumentZoneMiddleware(object):
                 new_path = request.path_info.replace(original_path,
                                                      new_path,
                                                      1)
-                new_path = '/%s%s' % (request.locale, new_path)
+                new_path = f'/{request.locale}{new_path}'
 
                 query = request.GET.copy()
                 if 'lang' in query:

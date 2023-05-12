@@ -157,7 +157,7 @@ def profile_edit(request, username):
         }
         # Load up initial websites with either user data or required base URL
         for name, meta in UserProfile.website_choices:
-            initial['websites_%s' % name] = profile.websites.get(name, '')
+            initial[f'websites_{name}'] = profile.websites.get(name, '')
 
         # Form fields to receive tags filtered by namespace.
         for field, ns in field_to_tag_ns:
@@ -205,7 +205,7 @@ def profile_edit(request, username):
             # Gather up all websites defined by the model, save them.
             sites = {}
             for name, meta in UserProfile.website_choices:
-                field_name = 'websites_%s' % name
+                field_name = f'websites_{name}'
                 field_value = profile_form.cleaned_data.get(field_name, '')
                 if field_value and field_value != meta['prefix']:
                     sites[name] = field_value
@@ -397,11 +397,11 @@ class SignupView(BaseSignupView):
         or_query = []
         # For GitHub users, find matching Persona social accounts by emails
         if self.sociallogin.account.provider == 'github':
-            for email_address in self.email_addresses.values():
-                if email_address['verified']:
-                    or_query.append(Q(uid=email_address['email']))
-
-        # For Persona users, find matching GitHub social accounts directly
+            or_query.extend(
+                Q(uid=email_address['email'])
+                for email_address in self.email_addresses.values()
+                if email_address['verified']
+            )
         elif self.sociallogin.account.provider == 'persona':
             if self.matching_user:
                 or_query.append(Q(user=self.matching_user, provider='github'))

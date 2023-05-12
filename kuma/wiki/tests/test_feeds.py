@@ -51,12 +51,12 @@ class FeedTests(UserTestCase, WikiTestCase):
         resp = self.client.get(feed_url)
         feed = pq(resp.content)
         eq_(1, len(feed.find('item')))
-        for i, item in enumerate(feed.find('item')):
+        for item in feed.find('item'):
             desc_text = pq(item).find('description').text()
-            ok_("%s$compare?to=%s&from=%s" % (d1.slug,
-                                              d1.current_revision.id,
-                                              first_rev_id)
-                in desc_text)
+            ok_(
+                f"{d1.slug}$compare?to={d1.current_revision.id}&from={first_rev_id}"
+                in desc_text
+            )
 
     def test_revisions_feed(self):
         d = document(title='HTML9')
@@ -64,13 +64,15 @@ class FeedTests(UserTestCase, WikiTestCase):
         now = datetime.datetime.now()
         for i in xrange(1, 6):
             created = now + datetime.timedelta(seconds=5 * i)
-            revision(save=True,
-                     document=d,
-                     title='HTML9',
-                     comment='Revision %s' % i,
-                     content="Some Content %s" % i,
-                     is_approved=True,
-                     created=created)
+            revision(
+                save=True,
+                document=d,
+                title='HTML9',
+                comment=f'Revision {i}',
+                content=f"Some Content {i}",
+                is_approved=True,
+                created=created,
+            )
 
         resp = self.client.get(reverse('wiki.feeds.recent_revisions',
                                        args=(), kwargs={'format': 'rss'}))
@@ -113,13 +115,15 @@ class FeedTests(UserTestCase, WikiTestCase):
         now = datetime.datetime.now()
         for i in xrange(1, 6):
             created = now + datetime.timedelta(seconds=5 * i)
-            revision(save=True,
-                     document=d,
-                     title='HTML9',
-                     comment='Revision %s' % i,
-                     content="Some Content %s" % i,
-                     is_approved=True,
-                     created=created)
+            revision(
+                save=True,
+                document=d,
+                title='HTML9',
+                comment=f'Revision {i}',
+                content=f"Some Content {i}",
+                is_approved=True,
+                created=created,
+            )
 
         resp = self.client.get('%s?all_locales' %
                                reverse('wiki.feeds.recent_revisions',
@@ -129,7 +133,7 @@ class FeedTests(UserTestCase, WikiTestCase):
         eq_(200, resp.status_code)
         feed = pq(resp.content)
         eq_(5, len(feed.find('item')))
-        for i, item in enumerate(feed.find('item')):
+        for item in feed.find('item'):
             href = pq(item).find('link').text()
             ok_('/fr/' in href)
 
@@ -158,7 +162,7 @@ class FeedTests(UserTestCase, WikiTestCase):
                                        args=(), kwargs={'format': 'rss'}))
         eq_(200, resp.status_code)
         feed = pq(resp.content)
-        for i, item in enumerate(feed.find('item')):
+        for item in feed.find('item'):
             desc_text = pq(item).find('description').text()
             if "Edited" in desc_text:
                 ok_('<h3>Tag changes:</h3>' in desc_text)
@@ -253,7 +257,7 @@ class FeedTests(UserTestCase, WikiTestCase):
                 )
                 for feed_url in feed_urls:
                     if show_all:
-                        feed_url = '%s?all_locales' % feed_url
+                        feed_url = f'{feed_url}?all_locales'
                     resp = self.client.get(feed_url)
                     data = json.loads(resp.content)
                     if show_all:

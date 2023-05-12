@@ -38,9 +38,9 @@ class KeyDecoratorsTest(TestCase):
             request = HttpRequest()
             request.user = AnonymousUser()
 
-            auth = '%s:%s' % (k, s)
+            auth = f'{k}:{s}'
             b64_auth = base64.encodestring(auth)
-            request.META['HTTP_AUTHORIZATION'] = 'Basic %s' % b64_auth
+            request.META['HTTP_AUTHORIZATION'] = f'Basic {b64_auth}'
 
             foo, bar = fake_view(request, 'foo', 'bar')
             eq_('foo', foo)

@@ -125,12 +125,20 @@ class ProfileViewsTest(UserTestCase):
         settings.DEBUG = self.old_debug
 
     def _get_current_form_field_values(self, doc):
-        # Scrape out the existing significant form field values.
-        form = dict()
-        for fn in ('username', 'email', 'fullname', 'title', 'organization',
-                   'location', 'irc_nickname', 'bio', 'interests'):
-            form[fn] = doc.find('#profile-edit *[name="profile-%s"]' %
-                                fn).val()
+        form = {
+            fn: doc.find(f'#profile-edit *[name="profile-{fn}"]').val()
+            for fn in (
+                'username',
+                'email',
+                'fullname',
+                'title',
+                'organization',
+                'location',
+                'irc_nickname',
+                'bio',
+                'interests',
+            )
+        }
         form['country'] = 'us'
         form['format'] = 'html'
         return form
@@ -153,8 +161,10 @@ class ProfileViewsTest(UserTestCase):
             doc.find('#profile-head.vcard .org').text())
         eq_(profile.location,
             doc.find('#profile-head.vcard .loc').text())
-        eq_('IRC: ' + profile.irc_nickname,
-            doc.find('#profile-head.vcard .irc').text())
+        eq_(
+            f'IRC: {profile.irc_nickname}',
+            doc.find('#profile-head.vcard .irc').text(),
+        )
         eq_(profile.bio,
             doc.find('#profile-head.vcard .profile-bio').text())
 
@@ -307,8 +317,7 @@ class ProfileViewsTest(UserTestCase):
         form = self._get_current_form_field_values(doc)
 
         # Fill out the form with websites.
-        form.update(dict(('profile-websites_%s' % k, v)
-                    for k, v in test_sites.items()))
+        form.update({f'profile-websites_{k}': v for k, v in test_sites.items()})
 
         # Submit the form, verify redirect to profile detail
         r = self.client.post(url, form, follow=True)
@@ -326,9 +335,7 @@ class ProfileViewsTest(UserTestCase):
         r = self.client.get(url, follow=True)
         doc = pq(r.content)
         for k, v in test_sites.items():
-            eq_(v,
-                doc.find('#profile-edit *[name="profile-websites_%s"]' %
-                         k).val())
+            eq_(v, doc.find(f'#profile-edit *[name="profile-websites_{k}"]').val())
 
         # Come up with some bad sites, either invalid URL or bad URL prefix
         bad_sites = {
@@ -336,8 +343,7 @@ class ProfileViewsTest(UserTestCase):
             u'twitter': u'http://facebook.com/lmorchard',
             u'stackoverflow': u'http://overqueueblah.com/users/lmorchard',
         }
-        form.update(dict(('profile-websites_%s' % k, v)
-                    for k, v in bad_sites.items()))
+        form.update({f'profile-websites_{k}': v for k, v in bad_sites.items()})
 
         # Submit the form, verify errors for all of the bad sites
         r = self.client.post(url, form, follow=True)
@@ -458,9 +464,12 @@ class ProfileViewsTest(UserTestCase):
         r = self.client.get(url, follow=True)
         for field in r.context['profile_form'].fields:
             # if label is localized it's a lazy proxy object
-            ok_(not isinstance(
-                r.context['profile_form'].fields[field].label, basestring),
-                'Field %s is a string!' % field)
+            ok_(
+                not isinstance(
+                    r.context['profile_form'].fields[field].label, basestring
+                ),
+                f'Field {field} is a string!',
+            )
 
 
 class Test404Case(UserTestCase):
@@ -579,7 +588,7 @@ class AllauthPersonaTestCase(UserTestCase):
             r = self.client.post(reverse('persona_login'),
                                  data={'next': doc_url},
                                  follow=True)
-            ok_(('http://testserver%s' % doc_url, 302) in r.redirect_chain)
+            ok_((f'http://testserver{doc_url}', 302) in r.redirect_chain)
 
     def test_persona_signup_create_django_user(self):
         """
@@ -610,7 +619,7 @@ class AllauthPersonaTestCase(UserTestCase):
             # We didn't create a new user.
             eq_(old_count, User.objects.count())
 
-            data.update({'agree': True})
+            data['agree'] = True
             response = self.client.post(signup_url, data=data, follow=True)
             eq_(response.status_code, 200)
             # not on the signup page anymore
@@ -710,9 +719,7 @@ class KumaGitHubTests(UserTestCase):
         ]"""
 
     def get_login_response_json(self, with_refresh_token=True):
-        rt = ''
-        if with_refresh_token:
-            rt = ',"refresh_token": "testrf"'
+        rt = ',"refresh_token": "testrf"' if with_refresh_token else ''
         return """{
             "uid":"weibo",
             "access_token":"testac"

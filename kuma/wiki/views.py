@@ -113,14 +113,14 @@ def _split_slug(slug):
     root = None
 
     seo_root = ''
-    bad_seo_roots = ['Web']
-
     if length > 1:
         root = slug_split[0]
 
+        bad_seo_roots = ['Web']
+
         if root in bad_seo_roots:
             if length > 2:
-                seo_root = root + '/' + slug_split[1]
+                seo_root = f'{root}/{slug_split[1]}'
         else:
             seo_root = root
 
@@ -244,9 +244,10 @@ def _check_404_params(request):
     request parameters.
 
     """
-    params = []
-    for request_param in ('raw', 'include', 'nocreate'):
-        params.append(request.GET.get(request_param, None))
+    params = [
+        request.GET.get(request_param, None)
+        for request_param in ('raw', 'include', 'nocreate')
+    ]
     return any(params) or (not request.user.is_authenticated())
 
 
@@ -309,10 +310,11 @@ def _generate_toc_html(doc, rendering_params):
     Generate the HTML, if needed, for a Document's table of contents.
 
     """
-    toc_html = None
-    if doc.show_toc and not rendering_params['raw']:
-        toc_html = doc.get_toc_html()
-    return toc_html
+    return (
+        doc.get_toc_html()
+        if doc.show_toc and not rendering_params['raw']
+        else None
+    )
 
 
 def _filter_doc_html(request, doc, doc_html, rendering_params):
@@ -374,7 +376,7 @@ def _get_seo_parent_title(slug_dict, document_locale):
             seo_root_doc = Document.objects.get(locale=document_locale,
                                             slug=slug_dict['seo_root'])
             #TODO: will this break a unicode title?
-            seo_parent_title = ' - ' + seo_root_doc.title
+            seo_parent_title = f' - {seo_root_doc.title}'
         except Document.DoesNotExist:
             pass
     return seo_parent_title
@@ -517,12 +519,10 @@ def document(request, document_slug, document_locale):
     if not request.user.has_perm('wiki.view_document', doc):
         raise PermissionDenied
 
-    # Step 3: Read some request params to see what we're supposed to
-    # do.
-    rendering_params = {}
-    for param in ('raw', 'summary',
-                  'include', 'edit_links'):
-        rendering_params[param] = request.GET.get(param, False) is not False
+    rendering_params = {
+        param: request.GET.get(param, False) is not False
+        for param in ('raw', 'summary', 'include', 'edit_links')
+    }
     rendering_params['section'] = request.GET.get('section', None)
     rendering_params['render_raw_fallback'] = False
     rendering_params['use_rendered'] = kumascript.should_use_rendered(doc, request.GET)
@@ -546,20 +546,14 @@ def document(request, document_slug, document_locale):
     # the contributors right into the Document's html field.)
     # NOTE: .only() avoids a memcache object-too-large error for large wiki
     # pages when an attempt is made to cache all revisions
-    contributors = set([r.creator for r in doc.revisions
-                                              .filter(is_approved=True)
-                                              .only('creator')
-                                              .select_related('creator')])
+    contributors = {
+        r.creator
+        for r in doc.revisions.filter(is_approved=True)
+        .only('creator')
+        .select_related('creator')
+    }
 
-    # TODO: Port this kitsune feature over, eventually:
-    #     https://github.com/jsocol/kitsune/commit/
-    #       f1ebb241e4b1d746f97686e65f49e478e28d89f2
-
-    # Get the SEO summary
-    seo_summary = ''
-    if not doc.is_template:
-        seo_summary = doc.get_summary_text()
-
+    seo_summary = doc.get_summary_text() if not doc.is_template else ''
     # Get the additional title information, if necessary.
     seo_parent_title = _get_seo_parent_title(slug_dict, document_locale)
 
@@ -910,11 +904,7 @@ def new_document(request):
             initial_data['title'] = initial_title
             initial_data['slug'] = initial_slug
 
-        if is_template:
-            review_tags = ('template',)
-        else:
-            review_tags = REVIEW_FLAG_TAGS_DEFAULT
-
+        review_tags = ('template', ) if is_template else REVIEW_FLAG_TAGS_DEFAULT
         doc_form = DocumentForm(initial=initial_data)
 
         rev_form = RevisionForm(initial={
@@ -947,7 +937,7 @@ def new_document(request):
     post_data.update({'locale': request.locale})
     if parent_slug:
         post_data.update({'parent_topic': initial_parent_id})
-        post_data.update({'slug': parent_slug + '/' + post_data['slug']})
+        post_data.update({'slug': f'{parent_slug}/' + post_data['slug']})
 
     doc_form = DocumentForm(post_data)
     rev_form = RevisionValidationForm(request.POST.copy())
@@ -1036,11 +1026,6 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
     if doc.allows_editing_by(user):
         doc_form = DocumentForm(initial=_document_form_initial(doc))
 
-    # Need to make check *here* to see if this could have a translation parent
-    show_translation_parent_block = (
-        (document_locale != settings.WIKI_DEFAULT_LANGUAGE) and
-        (not doc.parent_id))
-
     if request.method == 'GET':
         if not (rev_form or doc_form):
             # You can't do anything on this page, so get lost.
@@ -1051,6 +1036,11 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
         is_raw = request.GET.get('raw', False)
         need_edit_links = request.GET.get('edit_links', False)
         parent_id = request.POST.get('parent_id', '')
+
+        # Need to make check *here* to see if this could have a translation parent
+        show_translation_parent_block = (
+            (document_locale != settings.WIKI_DEFAULT_LANGUAGE) and
+            (not doc.parent_id))
 
         # Attempt to set a parent
         if show_translation_parent_block and parent_id:
@@ -1064,122 +1054,126 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
         # I embedded a hidden input:
         which_form = request.POST.get('form')
 
-        if which_form == 'doc':
-            if doc.allows_editing_by(user):
-                post_data = request.POST.copy()
+        if which_form == 'doc' and doc.allows_editing_by(user):
+            post_data = request.POST.copy()
 
-                post_data.update({'locale': document_locale})
-                doc_form = DocumentForm(post_data, instance=doc)
-                if doc_form.is_valid():
-                    # if must be here for section edits
-                    if 'slug' in post_data:
-                        post_data['slug'] = _join_slug(
-                            slug_dict['parent_split'], post_data['slug'])
+            post_data.update({'locale': document_locale})
+            doc_form = DocumentForm(post_data, instance=doc)
+            if doc_form.is_valid():
+                # if must be here for section edits
+                if 'slug' in post_data:
+                    post_data['slug'] = _join_slug(
+                        slug_dict['parent_split'], post_data['slug'])
 
-                    # Get the possibly new slug for the imminent redirection:
-                    doc = doc_form.save(None)
+                # Get the possibly new slug for the imminent redirection:
+                doc = doc_form.save(None)
 
-                    if is_iframe_target:
-                        # TODO: Does this really need to be a template? Just
-                        # shoehorning data into a single HTML element.
-                        response = HttpResponse("""
+                if is_iframe_target:
+                    # TODO: Does this really need to be a template? Just
+                    # shoehorning data into a single HTML element.
+                    response = HttpResponse("""
                             <span id="iframe-response"
                                   data-status="OK"
                                   data-current-revision="%s">OK</span>
                         """ % doc.current_revision.id)
-                        response['X-Frame-Options'] = 'SAMEORIGIN'
-                        return response
+                    response['X-Frame-Options'] = 'SAMEORIGIN'
+                    return response
 
-                    return HttpResponseRedirect(
-                        urlparams(reverse('wiki.edit_document',
-                                          args=[doc.full_path]),
-                                  opendescription=1))
-                disclose_description = True
+                return HttpResponseRedirect(
+                    urlparams(reverse('wiki.edit_document',
+                                      args=[doc.full_path]),
+                              opendescription=1))
+            disclose_description = True
+        elif (
+            which_form == 'doc'
+            and not doc.allows_editing_by(user)
+            or which_form != 'doc'
+            and which_form == 'rev'
+            and not doc.allows_revision_by(user)
+        ):
+            raise PermissionDenied
+
+        elif (
+            which_form != 'doc'
+            and which_form == 'rev'
+            and doc.allows_revision_by(user)
+        ):
+            post_data = request.POST.copy()
+
+            rev_form = RevisionForm(post_data,
+                                    is_iframe_target=is_iframe_target,
+                                    section_id=section_id)
+            rev_form.instance.document = doc  # for rev_form.clean()
+
+            # Come up with the original revision to which these changes
+            # would be applied.
+            orig_rev_id = request.POST.get('current_rev', False)
+            if orig_rev_id == False:
+                orig_rev = None
             else:
-                raise PermissionDenied
+                orig_rev = Revision.objects.get(pk=orig_rev_id)
+            # Get the document's actual current revision.
+            curr_rev = doc.current_revision
 
-        elif which_form == 'rev':
-            if not doc.allows_revision_by(user):
-                raise PermissionDenied
-            else:
-                post_data = request.POST.copy()
+            if not rev_form.is_valid() and 'current_rev' in rev_form._errors:
+                # Jump out to a function to escape indentation hell
+                return _edit_document_collision(
+                    request, orig_rev, curr_rev, is_iframe_target,
+                    is_raw, rev_form, doc_form, section_id,
+                    rev, doc)
 
-                rev_form = RevisionForm(post_data,
-                                        is_iframe_target=is_iframe_target,
-                                        section_id=section_id)
-                rev_form.instance.document = doc  # for rev_form.clean()
+            if rev_form.is_valid():
+                _save_rev_and_notify(rev_form, request, doc)
 
-                # Come up with the original revision to which these changes
-                # would be applied.
-                orig_rev_id = request.POST.get('current_rev', False)
-                if False == orig_rev_id:
-                    orig_rev = None
+                if is_iframe_target:
+                    # TODO: Does this really need to be a template? Just
+                    # shoehorning data into a single HTML element.
+                    response = HttpResponse("""
+                            <span id="iframe-response"
+                                  data-status="OK"
+                                  data-current-revision="%s">OK</span>
+                        """ % doc.current_revision.id)
+                    response['X-Frame-Options'] = 'SAMEORIGIN'
+                    return response
+
+                if (is_raw and orig_rev is not None and
+                        curr_rev.id != orig_rev.id):
+                    # If this is the raw view, and there was an original
+                    # revision, but the original revision differed from the
+                    # current revision at start of editing, we should tell
+                    # the client to refresh the page.
+                    response = HttpResponse('RESET')
+                    response['X-Frame-Options'] = 'SAMEORIGIN'
+                    response.status_code = 205
+                    return response
+
+                if rev_form.instance.is_approved:
+                    view = 'wiki.document'
                 else:
-                    orig_rev = Revision.objects.get(pk=orig_rev_id)
-                # Get the document's actual current revision.
-                curr_rev = doc.current_revision
+                    view = 'wiki.document_revisions'
 
-                if not rev_form.is_valid():
-                    # Was there a mid-air collision?
-                    if 'current_rev' in rev_form._errors:
-                        # Jump out to a function to escape indentation hell
-                        return _edit_document_collision(
-                            request, orig_rev, curr_rev, is_iframe_target,
-                            is_raw, rev_form, doc_form, section_id,
-                            rev, doc)
-
-                if rev_form.is_valid():
-                    _save_rev_and_notify(rev_form, request, doc)
-
-                    if is_iframe_target:
-                        # TODO: Does this really need to be a template? Just
-                        # shoehorning data into a single HTML element.
-                        response = HttpResponse("""
-                            <span id="iframe-response"
-                                  data-status="OK"
-                                  data-current-revision="%s">OK</span>
-                        """ % doc.current_revision.id)
-                        response['X-Frame-Options'] = 'SAMEORIGIN'
-                        return response
-
-                    if (is_raw and orig_rev is not None and
-                            curr_rev.id != orig_rev.id):
-                        # If this is the raw view, and there was an original
-                        # revision, but the original revision differed from the
-                        # current revision at start of editing, we should tell
-                        # the client to refresh the page.
-                        response = HttpResponse('RESET')
-                        response['X-Frame-Options'] = 'SAMEORIGIN'
-                        response.status_code = 205
-                        return response
-
-                    if rev_form.instance.is_approved:
-                        view = 'wiki.document'
-                    else:
-                        view = 'wiki.document_revisions'
-
-                    # Construct the redirect URL, adding any needed parameters
-                    url = reverse(view, args=[doc.full_path],
-                                  locale=doc.locale)
-                    params = {}
-                    if is_raw:
-                        params['raw'] = 'true'
-                        if need_edit_links:
-                            # Only need to carry over ?edit_links with ?raw,
-                            # because they're on by default in the normal UI
-                            params['edit_links'] = 'true'
-                        if section_id:
-                            # If a section was edited, and we're using the raw
-                            # content API, constrain to that section.
-                            params['section'] = section_id
-                    if params:
-                        url = '%s?%s' % (url, urlencode(params))
-                    if not is_raw and section_id:
+                # Construct the redirect URL, adding any needed parameters
+                url = reverse(view, args=[doc.full_path],
+                              locale=doc.locale)
+                params = {}
+                if is_raw:
+                    params['raw'] = 'true'
+                    if need_edit_links:
+                        # Only need to carry over ?edit_links with ?raw,
+                        # because they're on by default in the normal UI
+                        params['edit_links'] = 'true'
+                    if section_id:
+                        # If a section was edited, and we're using the raw
+                        # content API, constrain to that section.
+                        params['section'] = section_id
+                if params:
+                    url = f'{url}?{urlencode(params)}'
+                if not is_raw and section_id:
                         # If a section was edited, jump to the section anchor
                         # if we're not getting raw content.
-                        url = '%s#%s' % (url, section_id)
+                    url = f'{url}#{section_id}'
 
-                    return HttpResponseRedirect(url)
+                return HttpResponseRedirect(url)
 
     parent_path = parent_slug = ''
     if slug_dict['parent']:
@@ -1273,8 +1267,7 @@ def move(request, document_slug, document_locale):
     if request.method == 'POST':
         form = TreeMoveForm(initial=request.GET, data=request.POST)
         if form.is_valid():
-            conflicts = doc._tree_conflicts(form.cleaned_data['slug'])
-            if conflicts:
+            if conflicts := doc._tree_conflicts(form.cleaned_data['slug']):
                 return render(request, 'wiki/move_document.html', {
                     'form': form,
                     'document': doc,
@@ -1319,10 +1312,7 @@ def repair_breadcrumbs(request, document_slug, document_locale):
 def ckeditor_config(request):
     """Return ckeditor config from database"""
     default_config = EditorToolbar.objects.filter(name='default').all()
-    if len(default_config) > 0:
-        code = default_config[0].code
-    else:
-        code = ''
+    code = default_config[0].code if len(default_config) > 0 else ''
     context = {'editor_config': code, 'redirect_pattern': REDIRECT_CONTENT}
     return render(request, 'wiki/ckeditor_config.js', context,
                   content_type="application/x-javascript")
@@ -1431,7 +1421,7 @@ def autosuggest_documents(request):
     for d in docs:
         data = d.get_json_data()
         #data['plain_title'] = data['title']
-        data['label'] += ' [' + d.locale + ']'
+        data['label'] += f' [{d.locale}]'
         docs_list.append(data)
 
     data = json.dumps(docs_list)

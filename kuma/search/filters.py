@@ -38,7 +38,7 @@ class LanguageFilterBackend(BaseFilterBackend):
     """
     def filter_queryset(self, request, queryset, view):
         locale = request.GET.get('locale', None)
-        if '*' == locale:
+        if locale == '*':
             return queryset
 
         sq = queryset.to_dict().pop('query', query.MatchAll().to_dict())
@@ -85,9 +85,7 @@ class SearchQueryBackend(BaseFilterBackend):
     ]
 
     def filter_queryset(self, request, queryset, view):
-        search_term = view.query_params.get('q')
-
-        if search_term:
+        if search_term := view.query_params.get('q'):
             queries = []
             for query_type, field, boost in self.search_operations:
                 queries.append(
@@ -121,17 +119,19 @@ class AdvancedSearchQueryBackend(BaseFilterBackend):
         queries = []
 
         for field in self.fields:
-            search_param = view.query_params.get(field)
-            if not search_param:
-                continue
-
-            queries.append(
-                Q('match', **{field: {'query': search_param,
-                                      'boost': 10.0}}))
-            queries.append(
-                Q('prefix', **{field: {'value': search_param,
-                                       'boost': 5.0}}))
-
+            if search_param := view.query_params.get(field):
+                queries.extend(
+                    (
+                        Q(
+                            'match',
+                            **{field: {'query': search_param, 'boost': 10.0}}
+                        ),
+                        Q(
+                            'prefix',
+                            **{field: {'value': search_param, 'boost': 5.0}}
+                        ),
+                    )
+                )
         if queries:
             queryset = queryset.query(query.Bool(should=queries))
 
@@ -159,9 +159,7 @@ class DatabaseFilterBackend(BaseFilterBackend):
             filter_operator = Filter.OPERATORS[serialized_filter['operator']]
             if serialized_filter['slug'] in view.selected_filters:
                 if len(filter_tags) > 1:
-                    tag_filters = []
-                    for filter_tag in filter_tags:
-                        tag_filters.append(F('term', tags=filter_tag))
+                    tag_filters = [F('term', tags=filter_tag) for filter_tag in filter_tags]
                     active_filters.append(F(filter_operator, tag_filters))
                 else:
                     active_filters.append(F('term', tags=filter_tags[0]))
@@ -191,9 +189,7 @@ class HighlightFilterBackend(BaseFilterBackend):
     """
     def filter_queryset(self, request, queryset, view):
 
-        highlight = view.query_params.get('highlight')
-
-        if highlight:
+        if highlight := view.query_params.get('highlight'):
             queryset = queryset.highlight(*WikiDocumentType.excerpt_fields)
             queryset = queryset.highlight_options(order='score',
                                                   pre_tags=['<mark>'],

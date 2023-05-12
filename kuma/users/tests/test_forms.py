@@ -64,11 +64,8 @@ class TestUserProfileEditForm(KumaTestCase):
         profile_edit_profile = profile(profile_edit_user)
         for proto, expected_valid in protos:
             for name, site in sites:
-                url = '%s%s' % (proto, site)
-                data = {
-                    "email": "lorchard@mozilla.com",
-                    "websites_%s" % name: url
-                }
+                url = f'{proto}{site}'
+                data = {"email": "lorchard@mozilla.com", f"websites_{name}": url}
                 form = UserProfileEditForm(data, instance=profile_edit_profile)
                 result_valid = form.is_valid()
                 eq_(expected_valid, result_valid)

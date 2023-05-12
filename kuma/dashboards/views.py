@@ -39,34 +39,31 @@ def revisions(request):
         # Build up a dict of the filter conditions, if any, then apply
         # them all in one go.
         for fieldname, kwarg in query_kwargs_map.items():
-            filter_arg = filter_form.cleaned_data[fieldname]
-            if filter_arg:
+            if filter_arg := filter_form.cleaned_data[fieldname]:
                 query_kwargs[kwarg] = filter_arg
 
-        start_date = filter_form.cleaned_data['start_date']
-        if start_date:
+        if start_date := filter_form.cleaned_data['start_date']:
             end_date = (filter_form.cleaned_data['end_date'] or
                         datetime.datetime.now())
             query_kwargs['created__range'] = [start_date, end_date]
 
-        preceding_period = filter_form.cleaned_data['preceding_period']
-        if preceding_period:
+        if preceding_period := filter_form.cleaned_data['preceding_period']:
             # these are messy but work with timedelta's seconds format,
             # and keep the form and url arguments human readable
-            if preceding_period == 'month':
-                seconds = 30 * 24 * 60 * 60
-            if preceding_period == 'week':
-                seconds = 7 * 24 * 60 * 60
             if preceding_period == 'day':
                 seconds = 24 * 60 * 60
-            if preceding_period == 'hour':
+            elif preceding_period == 'hour':
                 seconds = 60 * 60
+            elif preceding_period == 'month':
+                seconds = 30 * 24 * 60 * 60
+            elif preceding_period == 'week':
+                seconds = 7 * 24 * 60 * 60
             # use the form date if present, otherwise, offset from now
             end_date = (filter_form.cleaned_data['end_date'] or
                         timezone.now())
             start_date = end_date - datetime.timedelta(seconds=seconds)
             query_kwargs['created__range'] = [start_date, end_date]
-            
+
     if query_kwargs:
         revisions = revisions.filter(**query_kwargs)
         total = revisions.count()
@@ -98,12 +95,9 @@ def user_lookup(request):
     userlist = []
 
     if request.is_ajax():
-        user = request.GET.get('user', '')
-        if user:
+        if user := request.GET.get('user', ''):
             matches = User.objects.filter(username__istartswith=user)
-            for match in matches:
-                userlist.append({'label': match.username})
-
+            userlist.extend({'label': match.username} for match in matches)
     data = json.dumps(userlist)
     return HttpResponse(data,
                         content_type='application/json; charset=utf-8')
@@ -115,12 +109,9 @@ def topic_lookup(request):
     topiclist = []
 
     if request.is_ajax():
-        topic = request.GET.get('topic', '')
-        if topic:
+        if topic := request.GET.get('topic', ''):
             matches = Document.objects.filter(slug__icontains=topic)
-            for match in matches:
-                topiclist.append({'label': match.slug})
-
+            topiclist.extend({'label': match.slug} for match in matches)
     data = json.dumps(topiclist)
     return HttpResponse(data,
                         content_type='application/json; charset=utf-8')

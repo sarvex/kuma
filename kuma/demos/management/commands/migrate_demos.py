@@ -38,7 +38,7 @@ class Command(BaseCommand):
         # Make a list of slugs for loop since the Submission QuerySet jumps
         # between default and 'new' databases
         source_slugs = [demo.slug for demo in source_demos]
-        logger.info("Migrating %s demo(s)" % len(source_demos))
+        logger.info(f"Migrating {len(source_demos)} demo(s)")
         for source_slug in source_slugs:
             _update_or_create_destination_demo(source_slug)
             _delete_and_recreate_tags(source_slug)
@@ -52,14 +52,14 @@ def _update_or_create_destination_demo(slug):
     try:
         destination_demo = Submission.objects.using('new').get(
             slug=source_demo.slug)
-        logger.info("%s: exists" % source_demo.slug)
+        logger.info(f"{source_demo.slug}: exists")
         destination_demo = _update_fields(destination_demo, source_demo)
     except Submission.DoesNotExist:
         destination_demo = deepcopy(source_demo)
         destination_demo.pk = destination_demo.id = None
         destination_creator = _get_or_create_destination_creator(slug)
         destination_demo.creator = destination_creator
-        logger.info("%s: created" % source_demo.slug)
+        logger.info(f"{source_demo.slug}: created")
     _disable_auto_date_fields(destination_demo)
     destination_demo.save(using='new')
     return destination_demo
@@ -76,20 +76,20 @@ def _delete_and_recreate_tags(slug):
     destination_tags_names = [tag.name for tag in destination_tags]
 
     if source_tags_names == destination_tags_names:
-        logger.info("%s: Found %s matching tag(s): %s" % (source_demo.slug,
-                                                 len(destination_tags),
-                                                 destination_tags_names))
+        logger.info(
+            f"{source_demo.slug}: Found {len(destination_tags)} matching tag(s): {destination_tags_names}"
+        )
         return destination_tags
     else:
         dest_demo_tagged_items = TaggedItem.objects.using('new').filter(
-            tag__in=[tag for tag in destination_tags],
+            tag__in=list(destination_tags),
             object_id=destination_demo.id,
-            content_type=destination_type
+            content_type=destination_type,
         )
         dest_demo_tagged_items.using('new').delete()
-        logger.info("%s: Migrating %s tag(s): %s" % (source_demo.slug,
-                                                    len(source_tags),
-                                                  source_tags_names))
+        logger.info(
+            f"{source_demo.slug}: Migrating {len(source_tags)} tag(s): {source_tags_names}"
+        )
         for source_tag in source_tags:
             try:
                 destination_tag = (
@@ -129,8 +129,7 @@ def _delete_and_recreate_comments(slug):
 
     source_comments = ThreadedComment.objects.using('default').filter(
         content_type=source_type, object_id=source_demo.id)
-    logger.info("%s: Migrating %s comment(s)" % (source_demo.slug,
-                                               len(source_comments)))
+    logger.info(f"{source_demo.slug}: Migrating {len(source_comments)} comment(s)")
     for comment in source_comments:
         comment.pk = None
         if comment.parent:
@@ -144,9 +143,11 @@ def _delete_and_recreate_comments(slug):
         try:
             comment.save(using='new')
         except:
-            import pdb; pdb.set_trace()
-            logger.info("%s: Couldn't save %s's comment." %
-                           (destination_demo.slug, comment.user.username))
+            import pdb
+            pdb.set_trace()
+            logger.info(
+                f"{destination_demo.slug}: Couldn't save {comment.user.username}'s comment."
+            )
 
 
 def _delete_and_recreate_action_counters(slug):
@@ -162,8 +163,7 @@ def _delete_and_recreate_action_counters(slug):
     source_actions = ActionCounterUnique.objects.filter(
                                 content_type=source_type,
                                 object_pk=source_demo.id)
-    logger.info("%s: Migrating %s action(s)" % (source_demo.slug,
-                                              len(source_actions)))
+    logger.info(f"{source_demo.slug}: Migrating {len(source_actions)} action(s)")
     for action in source_actions:
         action.pk = None
         action.content_type = destination_type
@@ -171,8 +171,7 @@ def _delete_and_recreate_action_counters(slug):
         try:
             action.save(using='new')
         except IntegrityError:
-            logger.warning("%s: Couldn't save %s action." %
-                           (destination_demo.slug, action.name))
+            logger.warning(f"{destination_demo.slug}: Couldn't save {action.name} action.")
 
 
 def _get_demo_content_types():
@@ -199,18 +198,16 @@ def _get_or_create_destination_creator(slug):
     try:
         destination_creator = User.objects.using('new').get(
             username=source_demo.creator.username)
-        logger.info("%s: Creator %s exists, id: %s" % (
-                                                source_demo.slug,
-                                                destination_creator.username,
-                                                destination_creator.id))
+        logger.info(
+            f"{source_demo.slug}: Creator {destination_creator.username} exists, id: {destination_creator.id}"
+        )
     except User.DoesNotExist:
         destination_creator = source_demo.creator
         destination_creator.pk = None
         destination_creator.save(using='new')
-        logger.info("%s: Creator %s created, id: %s" % (
-                                                source_demo.slug,
-                                                destination_creator.username,
-                                                destination_creator.id))
+        logger.info(
+            f"{source_demo.slug}: Creator {destination_creator.username} created, id: {destination_creator.id}"
+        )
     _get_or_create_destination_profile(slug, destination_creator)
     return destination_creator
 
@@ -220,18 +217,16 @@ def _get_or_create_destination_commentor(slug, source_comment):
     try:
         destination_commentator = User.objects.using('new').get(
             username=source_comment.user.username)
-        logger.info("%s: Commentator %s exists, id: %s" % (
-                                            source_demo.slug,
-                                            destination_commentator.username,
-                                            destination_commentator.id))
+        logger.info(
+            f"{source_demo.slug}: Commentator {destination_commentator.username} exists, id: {destination_commentator.id}"
+        )
     except User.DoesNotExist:
         destination_commentator = source_comment.user
         destination_commentator.pk = None
         destination_commentator.save(using='new')
-        logger.info("%s: Commentator %s created, id: %s" % (
-                                            source_demo.slug,
-                                            destination_commentator.username,
-                                            destination_commentator.id))
+        logger.info(
+            f"{source_demo.slug}: Commentator {destination_commentator.username} created, id: {destination_commentator.id}"
+        )
     _get_or_create_destination_profile(slug, destination_commentator)
     return destination_commentator
 
@@ -241,10 +236,9 @@ def _get_or_create_destination_profile(slug, destination_user):
     try:
         destination_profile = UserProfile.objects.using('new').get(
             user=destination_user)
-        logger.info("%s: UserProfile %s exists, id: %s" % (
-                                            source_demo.slug,
-                                            destination_user.username,
-                                            destination_user.id))
+        logger.info(
+            f"{source_demo.slug}: UserProfile {destination_user.username} exists, id: {destination_user.id}"
+        )
     except UserProfile.DoesNotExist:
         source_profile = UserProfile.objects.using('default').get(
             user=source_demo.creator)
@@ -252,10 +246,9 @@ def _get_or_create_destination_profile(slug, destination_user):
         destination_profile.pk = None
         destination_profile.user = destination_user
         destination_profile.save(using='new')
-        logger.info("%s: Profile %s created, id: %s" % (
-                                            source_demo.slug,
-                                            destination_user.username,
-                                            destination_user.id))
+        logger.info(
+            f"{source_demo.slug}: Profile {destination_user.username} created, id: {destination_user.id}"
+        )
     return destination_profile
 
 

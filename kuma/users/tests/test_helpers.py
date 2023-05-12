@@ -20,8 +20,10 @@ class HelperTestCase(UserTestCase):
 
     def test_profile_default_gravatar(self):
         d_param = urllib.urlencode({'d': settings.DEFAULT_AVATAR})
-        ok_(d_param in gravatar_url(self.u),
-            "Bad default avatar: %s" % gravatar_url(self.u))
+        ok_(
+            d_param in gravatar_url(self.u),
+            f"Bad default avatar: {gravatar_url(self.u)}",
+        )
 
     def test_gravatar_url(self):
         self.u.email = 'test@test.com'

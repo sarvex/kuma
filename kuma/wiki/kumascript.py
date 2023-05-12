@@ -51,11 +51,12 @@ def post(request, content, locale=settings.LANGUAGE_CODE,
         'locale': locale,
     }
     add_env_headers(headers, env_vars)
-    response = requests.post(url,
-                             timeout=constance.config.KUMASCRIPT_TIMEOUT,
-                             data=content.encode('utf8'),
-                             headers=headers)
-    if response:
+    if response := requests.post(
+        url,
+        timeout=constance.config.KUMASCRIPT_TIMEOUT,
+        data=content.encode('utf8'),
+        headers=headers,
+    ):
         body = process_body(response, use_constance_bleach_whitelists)
         errors = process_errors(response)
         return body, errors
@@ -86,7 +87,7 @@ def _format_slug_for_request(slug):
     # http://bugzil.la/1063580
     index = slug.find(TEMPLATE_TITLE_PREFIX)
     if index != -1:
-        slug = '%s%s' % (TEMPLATE_TITLE_PREFIX, slug[(index + len(TEMPLATE_TITLE_PREFIX)):].lower())
+        slug = f'{TEMPLATE_TITLE_PREFIX}{slug[index + len(TEMPLATE_TITLE_PREFIX):].lower()}'
     return slug
 
 
@@ -218,10 +219,12 @@ def get(document, cache_control, base_url, timeout=None):
 
 def add_env_headers(headers, env_vars):
     """Encode env_vars as kumascript headers, as base64 JSON-encoded values."""
-    headers.update(dict(
-        ('x-kumascript-env-%s' % k, base64.b64encode(json.dumps(v)))
-        for k, v in env_vars.items()
-    ))
+    headers.update(
+        {
+            f'x-kumascript-env-{k}': base64.b64encode(json.dumps(v))
+            for k, v in env_vars.items()
+        }
+    )
     return headers
 
 
@@ -275,8 +278,7 @@ def process_errors(response):
 
 def build_cache_keys(document_locale, document_slug):
     """Build the cache keys used for Kumascript"""
-    path_hash = hashlib.md5((u'%s/%s' % (document_locale, document_slug))
-                            .encode('utf8'))
+    path_hash = hashlib.md5(f'{document_locale}/{document_slug}'.encode('utf8'))
     base_key = 'kumascript:%s:%%s' % path_hash.hexdigest()
     etag_key = base_key % 'etag'
     modified_key = base_key % 'modified'

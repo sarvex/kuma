@@ -26,9 +26,7 @@ class IPBanJob(KumaJob):
 
     def fetch(self, ip):
         from .models import IPBan
-        if IPBan.objects.active(ip=ip).exists():
-            return "0/s"
-        return "60/m"
+        return "0/s" if IPBan.objects.active(ip=ip).exists() else "60/m"
 
     def empty(self):
         return "60/m"

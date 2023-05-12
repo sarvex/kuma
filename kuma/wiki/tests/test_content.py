@@ -70,7 +70,7 @@ class ContentSectionToolTests(UserTestCase):
             ('Quick_Links', 'Quick_Links'),
         )
         for cls, id in expected:
-            eq_(id, result_doc.find('.%s' % cls).attr('id'))
+            eq_(id, result_doc.find(f'.{cls}').attr('id'))
 
         # Then, ensure all elements in need of an ID now all have unique IDs.
         ok_(len(SECTION_TAGS) > 0)
@@ -740,7 +740,7 @@ class ContentSectionToolTests(UserTestCase):
 
     def test_iframe_host_filter(self):
         slug = 'test-code-embed'
-        embed_url = 'https://sampleserver/en-US/docs/%s$samples/sample1' % slug
+        embed_url = f'https://sampleserver/en-US/docs/{slug}$samples/sample1'
 
         doc_src = """
             <p>This is a page. Deal with it.</p>
@@ -842,10 +842,9 @@ class ContentSectionToolTests(UserTestCase):
             base_url=base_url,
             exist_url=d.get_absolute_url(),
             exist_url_with_base=urljoin(base_url, d.get_absolute_url()),
-            uilocale_url=u'/en-US/docs/%s/%s' % (d.locale, d.slug),
+            uilocale_url=f'/en-US/docs/{d.locale}/{d.slug}',
             noexist_url=u'/en-US/docs/no-such-doc',
-            noexist_url_with_base=urljoin(base_url,
-                                          u'/en-US/docs/no-such-doc'),
+            noexist_url_with_base=urljoin(base_url, u'/en-US/docs/no-such-doc'),
             noexist_uilocale_url=u'/en-US/docs/en-US/blah-blah-blah',
             nonen_slug='/fr/docs/CSS/H%c3%a9ritage',
             tag_url='/en-US/docs/tag/foo',
@@ -1039,7 +1038,7 @@ class AllowedHTMLTests(KumaTestCase):
                                        tags=ALLOWED_TAGS))
 
         for tag in self.unclose_tags:
-            html_str = '<%s>' % tag
+            html_str = f'<{tag}>'
             eq_(html_str, bleach.clean(html_str, attributes=ALLOWED_ATTRIBUTES,
                                        tags=ALLOWED_TAGS))
 

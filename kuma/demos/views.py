@@ -121,7 +121,7 @@ class TagView(ListView):
         get_object_or_404(Tag, name=tag)
 
         if tag in KNOWN_TECH_TAGS:
-            return redirect('demos_tag', 'tech:%s' % tag)
+            return redirect('demos_tag', f'tech:{tag}')
 
         # Bounce to special-purpose Dev Derby tag page
         if tag.startswith('challenge:'):
@@ -132,10 +132,11 @@ class TagView(ListView):
     def get_queryset(self):
         tag = self.kwargs['tag']
         sort_order = self.request.GET.get('sort', 'created')
-        queryset = (Submission.objects.all_sorted(sort_order)
-                                      .filter(taggit_tags__name__in=[tag])
-                                      .exclude(hidden=True))
-        return queryset
+        return (
+            Submission.objects.all_sorted(sort_order)
+            .filter(taggit_tags__name__in=[tag])
+            .exclude(hidden=True)
+        )
 
     def get_context_data(self, **kwargs):
         tag_obj = get_object_or_404(Tag, name=self.kwargs['tag'])
@@ -170,16 +171,13 @@ class DevDerbyTagView(ListView):
         for name in ('firstplace', 'secondplace', 'thirdplace'):
             # Look for the winner tag using our naming convention, eg.
             # system:challenge:firstplace:2011:june
-            winner_tag_name = 'system:challenge:%s:%s' % (
-                name, tag.replace('challenge:', '')
-            )
+            winner_tag_name = f"system:challenge:{name}:{tag.replace('challenge:', '')}"
 
             # Grab only the first match for this tag. If there are others, we'll
             # just ignore them.
             demos = (Submission.objects.all()
                      .filter(taggit_tags__name__in=[winner_tag_name]))
-            for demo in demos:
-                winner_demos.append(demo)
+            winner_demos.extend(iter(demos))
         base_context = super(DevDerbyTagView, self).get_context_data(**kwargs)
         base_context['tag'] = tag_obj
         base_context['winner_demos'] = winner_demos
@@ -190,7 +188,7 @@ class DevDerbyByDate(DevDerbyTagView):
     def get(self, request, *args, **kwargs):
         year = kwargs['year']
         month = kwargs['month']
-        self.kwargs['tag'] = 'challenge:%s:%s' % (year, month)
+        self.kwargs['tag'] = f'challenge:{year}:{month}'
         return super(DevDerbyByDate, self).get(request,
                                                tag=self.kwargs['tag'])
 
@@ -204,9 +202,9 @@ class SearchView(ListView):
     def get_queryset(self):
         query_string = self.request.GET.get('q', '')
         sort_order = self.request.GET.get('sort', 'created')
-        queryset = (Submission.objects.search(query_string, sort_order)
-                                      .exclude(hidden=True))
-        return queryset
+        return Submission.objects.search(query_string, sort_order).exclude(
+            hidden=True
+        )
 
 
 def profile_detail(request, username):

@@ -7,8 +7,7 @@ def locale_and_slug_from_path(path, request=None, path_locale=None):
     redirect to a more canonical path. In any case, produce a locale and
     slug derived from the given path."""
     locale, slug, needs_redirect = '', path, False
-    mdn_languages_lower = dict((x.lower(), x)
-                               for x in settings.MDN_LANGUAGES)
+    mdn_languages_lower = {x.lower(): x for x in settings.MDN_LANGUAGES}
 
     # If there's a slash in the path, then the first segment could be a
     # locale. And, that locale could even be a legacy MindTouch locale.

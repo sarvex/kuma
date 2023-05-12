@@ -53,7 +53,7 @@ class KumaAccountAdapter(DefaultAccountAdapter):
         return username
 
     def message_templates(self, *names):
-        return tuple('messages/%s.txt' % name for name in names)
+        return tuple(f'messages/{name}.txt' for name in names)
 
     def add_message(self, request, level, message_template,
                     message_context={}, extra_tags='', *args, **kwargs):
@@ -133,17 +133,18 @@ class KumaSocialAccountAdapter(DefaultSocialAccountAdapter):
             session_login = SocialLogin.deserialize(session_login_data)
             # If the provider in the session is different from the provider in the
             # request, the user is connecting a new provider to an existing account
-            if session_login.account.provider != request_login.account.provider:
-                # Does the request sociallogin match an existing user?
-                if not request_login.is_existing:
-                    # go straight back to signup page with an error message
-                    # BEFORE allauth over-writes the session sociallogin
-                    level = messages.ERROR
-                    message = "socialaccount/messages/account_not_found.txt"
-                    get_adapter().add_message(request, level, message)
-                    raise ImmediateHttpResponse(
-                        redirect('socialaccount_signup')
-                    )
+            if (
+                session_login.account.provider != request_login.account.provider
+                and not request_login.is_existing
+            ):
+                # go straight back to signup page with an error message
+                # BEFORE allauth over-writes the session sociallogin
+                level = messages.ERROR
+                message = "socialaccount/messages/account_not_found.txt"
+                get_adapter().add_message(request, level, message)
+                raise ImmediateHttpResponse(
+                    redirect('socialaccount_signup')
+                )
         # TODO: Can the code that uses this just use request.session['socialaccount_sociallogin'].account.provider instead?
         request.session['sociallogin_provider'] = (sociallogin
                                                    .account.provider)

@@ -96,7 +96,7 @@ bitly = bitly_api.Connection(login=getattr(settings, 'BITLY_USERNAME', ''),
 @register.filter
 def bitly_shorten(url):
     """Attempt to shorten a given URL through bit.ly / mzl.la"""
-    cache_key = 'bitly:%s' % hashlib.md5(smart_str(url)).hexdigest()
+    cache_key = f'bitly:{hashlib.md5(smart_str(url)).hexdigest()}'
     short_url = memcache.get(cache_key)
     if short_url is None:
         try:
@@ -190,7 +190,7 @@ def timesince(d, now=None):
     if since <= 0:
         # d is in the future compared to now, stop processing.
         return u''
-    for i, (seconds, name) in enumerate(chunks):
+    for seconds, name in chunks:
         count = since // seconds
         if count != 0:
             break
@@ -210,7 +210,7 @@ def entity_decode(str):
 
 @register.function
 def inlinei18n(locale):
-    key = 'statici18n:%s' % locale
+    key = f'statici18n:{locale}'
     path = memcache.get(key)
     if path is None:
         path = os.path.join(settings.STATICI18N_OUTPUT_DIR,
@@ -222,7 +222,7 @@ def inlinei18n(locale):
 
 @register.function
 def page_title(title):
-    return u'%s | MDN' % title
+    return f'{title} | MDN'
 
 
 @register.filter
@@ -334,29 +334,31 @@ def datetimeformat(context, value, format='shortdatetime', output='html'):
     locale = _babel_locale(_contextual_locale(context))
 
     # If within a day, 24 * 60 * 60 = 86400s
-    if format == 'shortdatetime':
-        # Check if the date is today
-        if value.toordinal() == datetime.date.today().toordinal():
-            formatted = _lazy(u'Today at %s') % format_time(
-                tzvalue, format='short', locale=locale)
-        else:
-            formatted = format_datetime(tzvalue, format='short', locale=locale)
-    elif format == 'longdatetime':
-        formatted = format_datetime(tzvalue, format='long', locale=locale)
-    elif format == 'date':
+    if format == 'date':
         formatted = format_date(tzvalue, locale=locale)
-    elif format == 'time':
-        formatted = format_time(tzvalue, locale=locale)
     elif format == 'datetime':
         formatted = format_datetime(tzvalue, locale=locale)
+    elif format == 'longdatetime':
+        formatted = format_datetime(tzvalue, format='long', locale=locale)
+    elif format == 'shortdatetime':
+        # Check if the date is today
+        formatted = (
+            _lazy(u'Today at %s')
+            % format_time(tzvalue, format='short', locale=locale)
+            if value.toordinal() == datetime.date.today().toordinal()
+            else format_datetime(tzvalue, format='short', locale=locale)
+        )
+    elif format == 'time':
+        formatted = format_time(tzvalue, locale=locale)
     else:
         # Unknown format
         raise DateTimeFormatError
 
     if output == 'json':
         return formatted
-    return jinja2.Markup('<time datetime="%s">%s</time>' %
-                         (tzvalue.isoformat(), formatted))
+    return jinja2.Markup(
+        f'<time datetime="{tzvalue.isoformat()}">{formatted}</time>'
+    )
 
 
 @register.function

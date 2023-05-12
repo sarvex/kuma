@@ -36,7 +36,7 @@ def email(save=False, **kwargs):
     if 'user' not in kwargs:
         kwargs['user'] = user(save=True)
     if 'email' not in kwargs:
-        kwargs['email'] = '%s@%s.com' % (random_str(), random_str())
+        kwargs['email'] = f'{random_str()}@{random_str()}.com'
     email = EmailAddress(**kwargs)
     if save:
         email.save()
@@ -45,11 +45,15 @@ def email(save=False, **kwargs):
 
 def verify_strings_in_response(test_strings, response):
     for test_string in test_strings:
-        ok_(test_string in response.content,
-            msg="Expected '%s' in content." % test_string)
+        ok_(
+            test_string in response.content,
+            msg=f"Expected '{test_string}' in content.",
+        )
 
 
 def verify_strings_not_in_response(test_strings, response):
     for test_string in test_strings:
-        ok_(test_string not in response.content,
-            msg="Found unexpected '%s' in content." % test_string)
+        ok_(
+            test_string not in response.content,
+            msg=f"Found unexpected '{test_string}' in content.",
+        )

@@ -18,9 +18,13 @@ def make_users():
 def build_submission(creator):
     now = str(datetime.datetime.now())
 
-    s = Submission(title='Hello world' + now, slug='hello-world' + now,
-        description='This is a hello world demo', hidden=False,
-        creator=creator)
+    s = Submission(
+        title=f'Hello world{now}',
+        slug=f'hello-world{now}',
+        description='This is a hello world demo',
+        hidden=False,
+        creator=creator,
+    )
     s.save()
 
     return s
@@ -29,9 +33,13 @@ def build_submission(creator):
 def build_hidden_submission(creator, slug='hidden-world'):
     now = str(datetime.datetime.now())
 
-    s = Submission(title='Hidden submission 1' + now, slug=slug + now,
-        description='This is a hidden demo', hidden=True,
-        creator=creator)
+    s = Submission(
+        title=f'Hidden submission 1{now}',
+        slug=slug + now,
+        description='This is a hidden demo',
+        hidden=True,
+        creator=creator,
+    )
     s.save()
 
     return s

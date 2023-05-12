@@ -51,12 +51,7 @@ def get_ip(request):
         # make sure we have one and only one IP
         try:
             ip_address = IP_RE.match(ip_address)
-            if ip_address:
-                ip_address = ip_address.group(0)
-            else:
-                # no IP, probably from some dirty proxy or other device
-                # throw in some bogus IP
-                ip_address = '10.0.0.1'
+            ip_address = ip_address.group(0) if ip_address else '10.0.0.1'
         except IndexError:
             pass
 
@@ -86,7 +81,7 @@ def paginate(request, queryset, per_page=20):
 
     qsa = urlencode(items)
 
-    paginated.url = u'%s?%s' % (base, qsa)
+    paginated.url = f'{base}?{qsa}'
     return paginated
 
 
@@ -130,7 +125,7 @@ def file_lock(prefix):
                 # Try to acquire the lock without blocking.
                 lock.acquire(0)
             except lockfile.LockError:
-                log.warning('Aborting %s; lock acquisition failed.' % name)
+                log.warning(f'Aborting {name}; lock acquisition failed.')
                 return 0
             else:
                 # We have the lock, call the function.
@@ -138,7 +133,9 @@ def file_lock(prefix):
                     return f(self, *args, **kwargs)
                 finally:
                     lock.release()
+
         return wrapper
+
     return decorator
 
 
@@ -175,7 +172,7 @@ class MemcacheLockException(Exception):
 
 class MemcacheLock(object):
     def __init__(self, key, attempts=1, expires=60 * 60 * 3):
-        self.key = 'lock_%s' % key
+        self.key = f'lock_{key}'
         self.attempts = attempts
         self.expires = expires
         self.cache = memcache
@@ -185,15 +182,14 @@ class MemcacheLock(object):
 
     def acquire(self):
         for i in xrange(0, self.attempts):
-            stored = self.cache.add(self.key, 1, self.expires)
-            if stored:
+            if stored := self.cache.add(self.key, 1, self.expires):
                 return True
             if i != self.attempts - 1:
                 sleep_time = (((i + 1) * random.random()) + 2 ** i) / 2.5
                 logging.debug('Sleeping for %s while trying to acquire key %s',
                               sleep_time, self.key)
                 time.sleep(sleep_time)
-        raise MemcacheLockException('Could not acquire lock for %s' % self.key)
+        raise MemcacheLockException(f'Could not acquire lock for {self.key}')
 
     def release(self):
         self.cache.delete(self.key)
@@ -258,8 +254,7 @@ def parse_tags(tagstring, sorted=True):
                     buffer.append(c)
                     c = i.next()
                 if buffer:
-                    word = u''.join(buffer).strip()
-                    if word:
+                    if word := u''.join(buffer).strip():
                         words.append(word)
                     buffer = []
                 open_quote = False
@@ -275,10 +270,7 @@ def parse_tags(tagstring, sorted=True):
                 saw_loose_comma = True
             to_be_split.append(u''.join(buffer))
     if to_be_split:
-        if saw_loose_comma:
-            delimiter = u','
-        else:
-            delimiter = u' '
+        delimiter = u',' if saw_loose_comma else u' '
         for chunk in to_be_split:
             words.extend(split_strip(chunk, delimiter))
     words = list(words)
@@ -305,8 +297,7 @@ def chunked(iterable, n):
     """
     iterable = iter(iterable)
     while 1:
-        t = tuple(islice(iterable, n))
-        if t:
+        if t := tuple(islice(iterable, n)):
             yield t
         else:
             return
@@ -314,14 +305,13 @@ def chunked(iterable, n):
 
 def chord_flow(pre_task, tasks, post_task):
 
-    if settings.CELERY_ALWAYS_EAGER:
-        # Eager mode and chords don't get along. So we serialize
-        # the tasks as a workaround.
-        tasks.insert(0, pre_task)
-        tasks.append(post_task)
-        return chain(*tasks)
-    else:
+    if not settings.CELERY_ALWAYS_EAGER:
         return chain(pre_task, chord(header=tasks, body=post_task))
+    # Eager mode and chords don't get along. So we serialize
+    # the tasks as a workaround.
+    tasks.insert(0, pre_task)
+    tasks.append(post_task)
+    return chain(*tasks)
 
 
 def limit_banned_ip_to_0(group, request):

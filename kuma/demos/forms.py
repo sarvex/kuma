@@ -95,38 +95,22 @@ class SubmissionEditForm(MyModelForm):
         self.fields['challenge_tags'].choices = (
             (TAG_DESCRIPTIONS[x]['tag_name'], TAG_DESCRIPTIONS[x]['title'])
             for x in parse_tags(
-                'challenge:none %s' %
-                constance.config.DEMOS_DEVDERBY_CHALLENGE_CHOICE_TAGS,
-                sorted=False)
+                f'challenge:none {constance.config.DEMOS_DEVDERBY_CHALLENGE_CHOICE_TAGS}',
+                sorted=False,
+            )
             if x in TAG_DESCRIPTIONS
         )
 
-        # If this is being used to edit a submission, we need to do
-        # the following:
-        #
-        # 1. Populate the tech tags.
-        #
-        # 2. If the deadline has passed for the challenge this is
-        #    entered in, remove the 'demo_package' field since they
-        #    can't upload a new package past the deadline.
-        #
-        # 3. If the deadline has passed, remove the field for choosing
-        #    which derby they're entered in. Otherwise, populate it so
-        #    they can choose to change it.
-        #
-        # 4. Make sure we stash away the existing challenge tags, and
-        #    ensure they're preserved across the edit.
-        instance = kwargs.get('instance', None)
-        if instance:
-            if instance.is_derby_submission():
-                if instance.challenge_closed():
-                    for fieldname in ('demo_package', 'challenge_tags'):
-                        del self.fields[fieldname]
-                    self._old_challenge_tags = [unicode(tag) for tag in instance.taggit_tags.all_ns('challenge:')]
+        if instance := kwargs.get('instance', None):
+            if instance.is_derby_submission() and instance.challenge_closed():
+                for fieldname in ('demo_package', 'challenge_tags'):
+                    del self.fields[fieldname]
+                self._old_challenge_tags = [unicode(tag) for tag in instance.taggit_tags.all_ns('challenge:')]
             for ns in ('tech', 'challenge'):
-                if '%s_tags' % ns in self.fields:
-                    self.initial['%s_tags' % ns] = [t.name
-                        for t in instance.taggit_tags.all_ns('%s:' % ns)]
+                if f'{ns}_tags' in self.fields:
+                    self.initial[f'{ns}_tags'] = [
+                        t.name for t in instance.taggit_tags.all_ns(f'{ns}:')
+                    ]
 
     def clean(self):
         cleaned_data = super(SubmissionEditForm, self).clean()

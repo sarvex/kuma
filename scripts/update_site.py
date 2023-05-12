@@ -77,11 +77,11 @@ def update_site(debug):
         elif EXEC == cmd:
             if debug:
                 sys.stdout.write("%s\n" % cmd_args)
-            if not 0 == os.system(cmd_args):
+            if os.system(cmd_args) != 0:
                 error_updating = True
                 break
         else:
-            raise Exception("Unknown type of command %s" % cmd)
+            raise Exception(f"Unknown type of command {cmd}")
 
     if error_updating:
         sys.stderr.write("There was an error while updating. Please try again "
@@ -90,7 +90,6 @@ def update_site(debug):
 
 def main():
     """ Handels command line args. """
-    debug = False
     usage = dedent("""\
         %prog [options]
         Updates a server's sources, vendor libraries, packages CSS/JS
@@ -103,8 +102,7 @@ def main():
                        action="store_true", dest="verbose")
     (opts, _) = options.parse_args()
 
-    if opts.verbose:
-        debug = True
+    debug = bool(opts.verbose)
     update_site(debug)
 
 

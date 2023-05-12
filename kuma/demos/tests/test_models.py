@@ -40,11 +40,13 @@ def save_valid_submission(title='hello world',
     zf.writestr('index.html', """<html> </html>""")
     zf.close()
     s.demo_package.save('play_demo.zip', ContentFile(fout.getvalue()))
-    s.screenshot_1.save('screenshot_1.jpg',
+    s.screenshot_1.save(
+        'screenshot_1.jpg',
         ContentFile(
-            open('%s/fixtures/screenshot_1.png' % (dirname(dirname(__file__))))
-            .read()
-        )
+            open(
+                f'{dirname(dirname(__file__))}/fixtures/screenshot_1.png'
+            ).read()
+        ),
     )
     s.save()
     return s
@@ -211,9 +213,9 @@ class DemoPackageTest(TestCase):
         path = s.demo_package.path.replace('.zip', '')
 
         ok_(isdir(path))
-        ok_(isfile('%s/index.html' % path))
-        ok_(isfile('%s/css/main.css' % path))
-        ok_(isfile('%s/js/main.js' % path))
+        ok_(isfile(f'{path}/index.html'))
+        ok_(isfile(f'{path}/css/main.css'))
+        ok_(isfile(f'{path}/js/main.js'))
 
         rmtree(path)
 
@@ -244,9 +246,9 @@ class DemoPackageTest(TestCase):
         path = s.demo_package.path.replace('.zip', '')
 
         ok_(isdir(path))
-        ok_(isfile('%s/index.html' % path))
-        ok_(isfile('%s/css/main.css' % path))
-        ok_(isfile('%s/js/main.js' % path))
+        ok_(isfile(f'{path}/index.html'))
+        ok_(isfile(f'{path}/css/main.css'))
+        ok_(isfile(f'{path}/js/main.js'))
 
         rmtree(path)
 
@@ -275,15 +277,15 @@ class DemoPackageTest(TestCase):
         path = s.demo_package.path.replace('.zip', '')
 
         ok_(isdir(path))
-        ok_(isfile((u'%s/index.html' % path).encode('utf-8')))
-        ok_(isfile((u'%s/css/예제.css' % path).encode('utf-8')))
-        ok_(isfile((u'%s/js/示例.js' % path).encode('utf-8')))
+        ok_(isfile(f'{path}/index.html'.encode('utf-8')))
+        ok_(isfile(f'{path}/css/예제.css'.encode('utf-8')))
+        ok_(isfile(f'{path}/js/示例.js'.encode('utf-8')))
 
         rmtree(path)
 
     def test_demo_unicode_filenames_2(self):
         """Bug 741660: Try testing a real .zip with non-ASCII filenames"""
-        zip_fn = '%s/fixtures/css3_clock.zip' % dirname(dirname(__file__))
+        zip_fn = f'{dirname(dirname(__file__))}/fixtures/css3_clock.zip'
 
         zf = zipfile.ZipFile(zip_fn)
 
@@ -301,7 +303,7 @@ class DemoPackageTest(TestCase):
         path = s.demo_package.path.replace('.zip', '')
 
         ok_(isdir(path))
-        ok_(isfile((u'%s/stylé.css' % path).encode('utf-8')))
+        ok_(isfile(f'{path}/stylé.css'.encode('utf-8')))
 
         rmtree(path)
 
@@ -329,15 +331,15 @@ class DemoPackageTest(TestCase):
         path = s.demo_package.path.replace('.zip', '')
 
         ok_(isdir(path))
-        ok_(isfile('%s/index.html' % path))
-        ok_(isfile('%s/css/main.css' % path))
-        ok_(isfile('%s/js/main.js' % path))
+        ok_(isfile(f'{path}/index.html'))
+        ok_(isfile(f'{path}/css/main.css'))
+        ok_(isfile(f'{path}/js/main.js'))
 
         s.delete()
 
-        ok_(not isfile('%s/index.html' % path))
-        ok_(not isfile('%s/css/main.css' % path))
-        ok_(not isfile('%s/js/main.js' % path))
+        ok_(not isfile(f'{path}/index.html'))
+        ok_(not isfile(f'{path}/css/main.css'))
+        ok_(not isfile(f'{path}/js/main.js'))
         ok_(not isdir(path))
 
     @override_constance_settings(DEMO_MAX_FILESIZE_IN_ZIP=1024*1024)
@@ -479,14 +481,14 @@ class DemoPackageTest(TestCase):
 
         ok_(isdir(path))
         ok_(isfile(s.demo_package.path))
-        ok_(isfile('%s/index.html' % path))
-        ok_(isfile('%s/css/main.css' % path))
-        ok_(isfile('%s/js/main.js' % path))
+        ok_(isfile(f'{path}/index.html'))
+        ok_(isfile(f'{path}/css/main.css'))
+        ok_(isfile(f'{path}/js/main.js'))
 
         s.censor(url="http://example.com/censored-explanation")
 
         ok_(not isfile(s.demo_package.path))
-        ok_(not isfile('%s/index.html' % path))
-        ok_(not isfile('%s/css/main.css' % path))
-        ok_(not isfile('%s/js/main.js' % path))
+        ok_(not isfile(f'{path}/index.html'))
+        ok_(not isfile(f'{path}/css/main.css'))
+        ok_(not isfile(f'{path}/js/main.js'))
         ok_(not isdir(path))

@@ -67,9 +67,11 @@ def on_revision_save(sender, **kwargs):
 
     # Reward the first revision of a new document
     first_document = get_badge('first-document')
-    if not first_document.is_awarded_to(o.creator):
-        if o.document.revisions.count() == 1:
-            first_document.award_to(o.creator)
+    if (
+        not first_document.is_awarded_to(o.creator)
+        and o.document.revisions.count() == 1
+    ):
+        first_document.award_to(o.creator)
 
     # Reward the first edit of any document
     first_edit = get_badge('first-edit')

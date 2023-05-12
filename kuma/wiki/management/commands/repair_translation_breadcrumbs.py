@@ -21,8 +21,7 @@ class Command(BaseCommand):
                 .exclude(parent__exact=None)
                 .filter(parent_topic__exact=None))
 
-        logging.debug("Attempting breadcrumb repair for %s translations" %
-                      (docs.count()))
+        logging.debug(f"Attempting breadcrumb repair for {docs.count()} translations")
 
         for doc in docs:
             doc.acquire_translated_topic_parent()

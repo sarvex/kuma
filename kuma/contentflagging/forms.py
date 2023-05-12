@@ -15,8 +15,7 @@ class ContentFlagForm(forms.ModelForm):
                                   widget=forms.RadioSelect)
 
     def clean(self):
-        cleaned_data = super(ContentFlagForm, self).clean()
-        return cleaned_data
+        return super(ContentFlagForm, self).clean()
 
     def as_ul(self):
         "Returns this form rendered as HTML <li>s -- excluding the <ul></ul>."

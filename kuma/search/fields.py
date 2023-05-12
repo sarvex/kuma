@@ -45,8 +45,7 @@ class SiteURLField(serializers.Field):
         if not value:
             return None
         args = [serializers.get_component(value, arg) for arg in self.args]
-        kwargs = dict((arg, serializers.get_component(value, arg))
-                      for arg in self.kwargs)
+        kwargs = {arg: serializers.get_component(value, arg) for arg in self.kwargs}
         locale = getattr(value, 'locale', settings.LANGUAGE_CODE)
         path = reverse(self.url_name, locale=locale, args=args, kwargs=kwargs)
-        return '%s%s' % (settings.SITE_URL, path)
+        return f'{settings.SITE_URL}{path}'

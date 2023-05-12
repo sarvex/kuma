@@ -42,8 +42,7 @@ class AttachmentTests(UserTestCase, WikiTestCase):
             'file': file_for_upload,
         }
 
-        resp = self.client.post(reverse('attachments.new_attachment'), data=post_data)
-        return resp
+        return self.client.post(reverse('attachments.new_attachment'), data=post_data)
 
     def test_legacy_redirect(self):
         test_user = User.objects.get(username='testuser2')
@@ -87,8 +86,7 @@ class AttachmentTests(UserTestCase, WikiTestCase):
         eq_(302, resp.status_code)
 
         attachment = Attachment.objects.get(title='Test uploaded file')
-        eq_(resp['Location'],
-            'http://testserver%s' % attachment.get_absolute_url())
+        eq_(resp['Location'], f'http://testserver{attachment.get_absolute_url()}')
 
         rev = attachment.current_revision
         eq_('admin', rev.creator.username)
@@ -135,8 +133,7 @@ class AttachmentTests(UserTestCase, WikiTestCase):
 
         # Re-fetch because it's been updated.
         attachment = Attachment.objects.get(title='Test editing file')
-        eq_(resp['Location'],
-            'http://testserver%s' % attachment.get_absolute_url())
+        eq_(resp['Location'], f'http://testserver{attachment.get_absolute_url()}')
 
         eq_(2, attachment.revisions.count())
 
@@ -161,7 +158,7 @@ class AttachmentTests(UserTestCase, WikiTestCase):
 
         url = attachment.get_file_url()
         resp = self.client.get(url, HTTP_HOST=settings.ATTACHMENT_HOST)
-        eq_('ALLOW-FROM: %s' % settings.DOMAIN, resp['x-frame-options'])
+        eq_(f'ALLOW-FROM: {settings.DOMAIN}', resp['x-frame-options'])
         eq_(200, resp.status_code)
         ok_('Last-Modified' in resp)
         ok_('1970' not in resp['Last-Modified'])

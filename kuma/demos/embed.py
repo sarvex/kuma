@@ -56,10 +56,8 @@ DEFAULT_PARAMS = {'width': 480, 'height': 360}
 
 def build_video_embed(url, **kwargs):
     for regex, embed_url in EMBED_PATTERNS:
-        match = regex.match(url)
-        if match:
-            params = dict(DEFAULT_PARAMS)
-            params.update(kwargs)
+        if match := regex.match(url):
+            params = dict(DEFAULT_PARAMS) | kwargs
             params['url'] = embed_url % match.groupdict()
             return EMBED_CODE % params
     return None
@@ -95,8 +93,8 @@ class VideoEmbedURLDescriptor(object):
     def __get__(self, instance=None, owner=None):
         if instance is None:
             raise AttributeError(
-                "The '%s' attribute can only be accessed from %s instances."
-                % (self.field.name, owner.__name__))
+                f"The '{self.field.name}' attribute can only be accessed from {owner.__name__} instances."
+            )
 
         veurl = instance.__dict__[self.field.name]
 
@@ -109,9 +107,7 @@ class VideoEmbedURLDescriptor(object):
             veurl.field = self.field
 
         out = instance.__dict__[self.field.name]
-        if not out or not out.value:
-            return None
-        return out
+        return None if not out or not out.value else out
 
 
 class VideoEmbedURLField(models.URLField):

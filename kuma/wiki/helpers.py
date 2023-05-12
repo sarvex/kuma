@@ -42,15 +42,19 @@ seqm is a difflib.SequenceMatcher instance whose a & b are strings"""
     lines = constance.config.FEED_DIFF_CONTEXT_LINES
     full_output = []
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
-        if opcode == 'equal':
+        if opcode == 'delete':
+            full_output.append(f"<del>{seqm.a[a0:a1]}</del>")
+        elif opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
-        elif opcode == 'delete':
-            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
+            full_output.append(f"<ins>{seqm.b[b0:b1]}</ins>")
         elif opcode == 'replace':
-            full_output.append("&nbsp;<del>" + seqm.a[a0:a1] + "</del>&nbsp;")
-            full_output.append("&nbsp;<ins>" + seqm.b[b0:b1] + "</ins>&nbsp;")
+            full_output.extend(
+                (
+                    f"&nbsp;<del>{seqm.a[a0:a1]}</del>&nbsp;",
+                    f"&nbsp;<ins>{seqm.b[b0:b1]}</ins>&nbsp;",
+                )
+            )
         else:
             raise RuntimeError("unexpected opcode")
     output = []
@@ -130,21 +134,18 @@ def format_comment(rev):
 def revisions_unified_diff(from_revision, to_revision):
     if from_revision is None or to_revision is None:
         return "Diff is unavailable."
-    fromfile = u'[%s] %s #%s' % (from_revision.document.locale,
-                                 from_revision.document.title,
-                                 from_revision.id)
-    tofile = u'[%s] %s #%s' % (to_revision.document.locale,
-                               to_revision.document.title,
-                               to_revision.id)
+    fromfile = f'[{from_revision.document.locale}] {from_revision.document.title} #{from_revision.id}'
+    tofile = f'[{to_revision.document.locale}] {to_revision.document.title} #{to_revision.id}'
     tidy_from, errors = _massage_diff_content(from_revision.content)
     tidy_to, errors = _massage_diff_content(to_revision.content)
-    diff = u'\n'.join(difflib.unified_diff(
-        tidy_from.splitlines(),
-        tidy_to.splitlines(),
-        fromfile=fromfile,
-        tofile=tofile
-    ))
-    return diff
+    return u'\n'.join(
+        difflib.unified_diff(
+            tidy_from.splitlines(),
+            tidy_to.splitlines(),
+            fromfile=fromfile,
+            tofile=tofile,
+        )
+    )
 
 
 @register.function
@@ -165,7 +166,7 @@ def diff_table(content_from, content_to, prev_id, curr_id):
     except RuntimeError:
         # some diffs hit a max recursion error
         message = _(u'There was an error generating the content.')
-        diff = '<div class="warning"><p>%s</p></div>' % message
+        diff = f'<div class="warning"><p>{message}</p></div>'
     return jinja2.Markup(diff)
 
 
@@ -272,8 +273,9 @@ def document_zone_management_links(user, document):
     # zone but the document is not itself the root (ie. to add sub-zones).
     if ((not zone or zone.document != document) and
             user.has_perm('wiki.add_documentzone')):
-        links['add'] = '%s?document=%s' % (
-            reverse('admin:wiki_documentzone_add'), document.id)
+        links[
+            'add'
+        ] = f"{reverse('admin:wiki_documentzone_add')}?document={document.id}"
 
     # Enable "change" link if there's a zone, and the user has permission.
     if zone and user.has_perm('wiki.change_documentzone'):
@@ -322,7 +324,7 @@ def wiki_url(context, path):
     locale = getattr(context['request'], 'locale', default_locale)
 
     # let's first check if the cache is already filled
-    url = memcache.get(u'wiki_url:%s:%s' % (locale, path))
+    url = memcache.get(f'wiki_url:{locale}:{path}')
     if url:
         # and return the URL right away if yes
         return url
@@ -341,16 +343,11 @@ def wiki_url(context, path):
 
             # look if the document is actual just a redirect
             redirect_url = translation.redirect_url()
-            if redirect_url is None:
-                # if no, build the URL of the translation
-                url = translation.get_absolute_url()
-            else:
-                # use the redirect URL instead
-                url = redirect_url
+            url = translation.get_absolute_url() if redirect_url is None else redirect_url
         except Document.DoesNotExist:
             # otherwise use the already defined url to the English document
             pass
 
     # finally cache the reversed document URL for a bit
-    memcache.set(u'wiki_url:%s:%s' % (locale, path), url, 60 * 5)
+    memcache.set(f'wiki_url:{locale}:{path}', url, 60 * 5)
     return url

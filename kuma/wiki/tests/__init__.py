@@ -30,10 +30,11 @@ class WikiTestCase(KumaTestCase):
 def document(save=False, **kwargs):
     """Return an empty document with enough stuff filled out that it can be
     saved."""
-    defaults = {'category': Document.CATEGORIES[0][0],
-                'title': str(datetime.now()),
-                'is_redirect': 0}
-    defaults.update(kwargs)
+    defaults = {
+        'category': Document.CATEGORIES[0][0],
+        'title': str(datetime.now()),
+        'is_redirect': 0,
+    } | kwargs
     if 'slug' not in kwargs:
         defaults['slug'] = slugify(defaults['title'])
     d = Document(**defaults)
@@ -58,13 +59,15 @@ def revision(save=False, **kwargs):
     else:
         d = kwargs['document']
 
-    defaults = {'summary': 'Some summary', 'content': 'Some content',
-                'comment': 'Some comment',
-                'creator': kwargs.get('creator', get_user()), 'document': d,
-                'tags': '"some", "tags"', 'toc_depth': 1}
-
-    defaults.update(kwargs)
-
+    defaults = {
+        'summary': 'Some summary',
+        'content': 'Some content',
+        'comment': 'Some comment',
+        'creator': kwargs.get('creator', get_user()),
+        'document': d,
+        'tags': '"some", "tags"',
+        'toc_depth': 1,
+    } | kwargs
     r = Revision(**defaults)
     if save:
         r.save()
@@ -78,8 +81,7 @@ def translated_revision(locale='de', **kwargs):
     translation = document(parent=parent_rev.document,
                            locale=locale)
     translation.save()
-    new_kwargs = {'document': translation, 'based_on': parent_rev}
-    new_kwargs.update(kwargs)
+    new_kwargs = {'document': translation, 'based_on': parent_rev} | kwargs
     return revision(**new_kwargs)
 
 
@@ -135,12 +137,15 @@ def normalize_html(input):
     """Normalize HTML5 input, discarding parts not significant for
     equivalence in tests"""
 
+
+
     class WhitespaceRemovalFilter(html5lib_Filter):
         def __iter__(self):
             for token in html5lib_Filter.__iter__(self):
-                if 'SpaceCharacters' == token['type']:
+                if token['type'] == 'SpaceCharacters':
                     continue
                 yield token
+
 
     return (kuma.wiki.content
             .parse(unicode(input))
@@ -150,16 +155,18 @@ def normalize_html(input):
 
 @nottest
 def create_template_test_users():
-    perms = dict(
-        (x, [Permission.objects.get(codename='%s_template_document' % x)])
-        for x in ('add', 'change',)
-    )
+    perms = {
+        x: [Permission.objects.get(codename=f'{x}_template_document')]
+        for x in (
+            'add',
+            'change',
+        )
+    }
     perms['all'] = perms['add'] + perms['change']
 
     groups = {}
     for x in ('add', 'change', 'all'):
-        group, created = Group.objects.get_or_create(
-                             name='templaters_%s' % x)
+        group, created = Group.objects.get_or_create(name=f'templaters_{x}')
         if created:
             group.permissions = perms[x]
             group.save()
@@ -167,9 +174,15 @@ def create_template_test_users():
 
     users = {}
     for x in ('none', 'add', 'change', 'all'):
-        user, created = User.objects.get_or_create(username='user_%s' % x,
-            defaults=dict(email='user_%s@example.com',
-                          is_active=True, is_staff=False, is_superuser=False))
+        user, created = User.objects.get_or_create(
+            username=f'user_{x}',
+            defaults=dict(
+                email='user_%s@example.com',
+                is_active=True,
+                is_staff=False,
+                is_superuser=False,
+            ),
+        )
         if created:
             user.set_password('testpass')
             user.groups = groups.get(x, [])

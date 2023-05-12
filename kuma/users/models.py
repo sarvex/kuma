@@ -144,7 +144,7 @@ class UserProfile(ModelBase):
         db_table = 'user_profiles'
 
     def __unicode__(self):
-        return '%s: %s' % (self.id, self.deki_user_id)
+        return f'{self.id}: {self.deki_user_id}'
 
     def get_absolute_url(self):
         return self.user.get_absolute_url()
@@ -176,11 +176,7 @@ class UserProfile(ModelBase):
         return gravatar_url(self.user)
 
     def allows_editing_by(self, user):
-        if user == self.user:
-            return True
-        if user.is_staff or user.is_superuser:
-            return True
-        return False
+        return True if user == self.user else bool(user.is_staff or user.is_superuser)
 
     def wiki_activity(self):
         return (Revision.objects.filter(creator=self.user)
@@ -195,21 +191,21 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(user_signed_up)
 def on_user_signed_up(sender, request, user, **kwargs):
-    if switch_is_active('welcome_email'):
-        # only send if the user has already verified at least one email address
-        if user.emailaddress_set.filter(verified=True).exists():
-            send_welcome_email.delay(user.pk, request.locale)
+    if (
+        switch_is_active('welcome_email')
+        and user.emailaddress_set.filter(verified=True).exists()
+    ):
+        send_welcome_email.delay(user.pk, request.locale)
 
 
 @receiver(email_confirmed)
 def on_email_confirmed(sender, request, email_address, **kwargs):
-    if switch_is_active('welcome_email'):
-        # only send if the user has exactly one verified (the given)
-        # email address, in other words if it was just confirmed
-        if not (email_address.user
-                             .emailaddress_set.exclude(pk=email_address.pk)
-                                              .exists()):
-            send_welcome_email.delay(email_address.user.pk, request.locale)
+    if switch_is_active('welcome_email') and not (
+        email_address.user.emailaddress_set.exclude(
+            pk=email_address.pk
+        ).exists()
+    ):
+        send_welcome_email.delay(email_address.user.pk, request.locale)
 
 
 

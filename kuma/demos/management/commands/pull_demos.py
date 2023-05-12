@@ -31,7 +31,7 @@ class Command(BaseCommand):
                                                         slug=options['slug'])
         else:
             dest_demos = Submission.objects.using(dest).all()
-        logger.info("Pulling %s demo(s)" % len(dest_demos))
+        logger.info(f"Pulling {len(dest_demos)} demo(s)")
         for dest_demo in dest_demos:
             logger.info(dest_demo.slug)
             try:

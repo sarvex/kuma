@@ -15,8 +15,4 @@ class AttachmentManager(models.Manager):
         if user.has_perm('attachments.add_attachment'):
             # Explicit add permission overrides disallow
             return True
-        if user.has_perm('attachments.disallow_add_attachment'):
-            # Disallow generally applied via group, so per-user allow can
-            # override
-            return False
-        return True
+        return not user.has_perm('attachments.disallow_add_attachment')

@@ -25,10 +25,7 @@ class UpdateCommunityStatsTests(UserTestCase):
 
     def test_populated_community_stats(self):
         for i in range(self.contributors):
-            if i % 2 == 0:
-                locale = 'en-US'
-            else:
-                locale = 'pt-BR'
+            locale = 'en-US' if i % 2 == 0 else 'pt-BR'
             test_user = user(save=True)
             doc = document(save=True, locale=locale)
             revision(save=True, creator=test_user, document=doc)
@@ -55,8 +52,7 @@ class SitemapsTestCase(UserTestCase):
                                                               flat=True):
             # we'll expect to see this locale in the sitemap index file
             expected_sitemap_locs.append(
-                "<loc>https://example.com/sitemaps/%s/sitemap.xml</loc>" %
-                locale
+                f"<loc>https://example.com/sitemaps/{locale}/sitemap.xml</loc>"
             )
             sitemap_path = os.path.join(settings.MEDIA_ROOT, 'sitemaps',
                                         locale, 'sitemap.xml')

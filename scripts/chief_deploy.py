@@ -19,7 +19,7 @@ import commander_settings as settings
 def update_code(ctx, tag):
     with ctx.lcd(settings.SRC_DIR):
         ctx.local("git fetch")
-        ctx.local("git checkout -f %s" % tag)
+        ctx.local(f"git checkout -f {tag}")
         ctx.local("git submodule sync")
         ctx.local("git submodule update --init --recursive")
 
@@ -77,10 +77,11 @@ def update_celery(ctx):
 # also doesn't pass ref at this point... we have to backdoor that too!
 @task
 def ping_newrelic(ctx):
-    f = open(settings.SRC_DIR + "/media/revision.txt", "r")
-    tag = f.read()
-    f.close()
-    ctx.local('curl --silent -H "x-api-key:%s" -d "deployment[app_name]=%s" -d "deployment[revision]=%s" -d "deployment[user]=Chief" https://rpm.newrelic.com/deployments.xml' % (settings.NEWRELIC_API_KEY, settings.REMOTE_HOSTNAME, tag))
+    with open(f"{settings.SRC_DIR}/media/revision.txt", "r") as f:
+        tag = f.read()
+    ctx.local(
+        f'curl --silent -H "x-api-key:{settings.NEWRELIC_API_KEY}" -d "deployment[app_name]={settings.REMOTE_HOSTNAME}" -d "deployment[revision]={tag}" -d "deployment[user]=Chief" https://rpm.newrelic.com/deployments.xml'
+    )
 
 @task
 def update_info(ctx):

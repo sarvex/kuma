@@ -25,13 +25,13 @@ class JSONField(models.TextField):
     def to_python(self, value):
         """Convert our string value to JSON after we load it from the DB"""
         if not value:
-            return dict()
+            return {}
         try:
             if (isinstance(value, basestring) or
                     type(value) is unicode):
                 return json.loads(value)
         except ValueError:
-            return dict()
+            return {}
         return value
 
     def get_db_prep_save(self, value, connection):

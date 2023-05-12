@@ -29,7 +29,7 @@ PROTOCOL = 'https://'
 DOMAIN = 'developer.mozilla.org'
 SITE_URL = PROTOCOL + DOMAIN
 PRODUCTION_URL = SITE_URL
-STAGING_URL = PROTOCOL + 'developer.allizom.org'
+STAGING_URL = f'{PROTOCOL}developer.allizom.org'
 USE_X_FORWARDED_HOST = True
 
 MANAGERS = ADMINS
@@ -202,14 +202,12 @@ for requested_lang, delivered_lang in LOCALE_ALIASES.items():
 
 
 def get_locales():
-    locales = {}
     file = os.path.join(ROOT, 'kuma', 'languages.json')
     json_locales = json.load(open(file, 'r'))
-    for locale, meta in json_locales.items():
-        locales[locale] = _Language(meta['English'],
-                                    meta['native'],
-                                    locale)
-    return locales
+    return {
+        locale: _Language(meta['English'], meta['native'], locale)
+        for locale, meta in json_locales.items()
+    }
 
 LOCALES = get_locales()
 
@@ -225,8 +223,10 @@ def lazy_langs():
                 for lang in langs])
 
 LANGUAGES_DICT = lazy(lazy_langs, dict)()
-LANGUAGES = sorted(tuple([(i, LOCALES[i].native) for i in MDN_LANGUAGES]),
-                   key=lambda lang:lang[0])
+LANGUAGES = sorted(
+    tuple((i, LOCALES[i].native) for i in MDN_LANGUAGES),
+    key=lambda lang: lang[0],
+)
 
 # DEKI uses different locale keys
 def lazy_language_deki_map():
@@ -436,7 +436,7 @@ PASSWORD_HASHERS = (
 )
 
 USER_AVATAR_PATH = 'uploads/avatars/'
-DEFAULT_AVATAR = MEDIA_URL + 'img/avatar.png'
+DEFAULT_AVATAR = f'{MEDIA_URL}img/avatar.png'
 AVATAR_SIZE = 48  # in pixels
 ACCOUNT_ACTIVATION_DAYS = 30
 MAX_AVATAR_FILE_SIZE = 131072  # 100k, in bytes
@@ -553,8 +553,9 @@ def JINJA_CONFIG():
         # Django can't store binary directly; it enforces unicode on it.
         # Details: http://jinja.pocoo.org/2/documentation/api#bytecode-cache
         # and in the errors you get when you try it the other way.
-        bc = jinja2.MemcachedBytecodeCache(cache._cache,
-                                           "%s:j2:" % settings.CACHE_PREFIX)
+        bc = jinja2.MemcachedBytecodeCache(
+            cache._cache, f"{settings.CACHE_PREFIX}:j2:"
+        )
         config['cache_size'] = -1  # Never clear the cache
         config['bytecode_cache'] = bc
     return config

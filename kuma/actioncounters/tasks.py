@@ -24,7 +24,7 @@ def update_actioncounter_counts():
     def get_update(ct_pk, obj_pk):
         key = (ct_pk, obj_pk)
         if key not in updates:
-            updates[key] = dict()
+            updates[key] = {}
         return updates[key]
 
     cursor = connection.cursor()
@@ -50,7 +50,7 @@ def update_actioncounter_counts():
         interval=ACTIONCOUNTERS_RECENT_COUNT_WINDOW
     ))
     for row in cursor.fetchall():
-        get_update(row[0], row[1])['%s_recent' % row[2]] = 0
+        get_update(row[0], row[1])[f'{row[2]}_recent'] = 0
 
     # Sum up the counters within the history window.
     cursor.execute("""
@@ -62,7 +62,7 @@ def update_actioncounter_counts():
         interval=ACTIONCOUNTERS_RECENT_COUNT_WINDOW
     ))
     for row in cursor.fetchall():
-        get_update(row[0], row[1])['%s_recent' % row[2]] = row[3]
+        get_update(row[0], row[1])[f'{row[2]}_recent'] = row[3]
 
     # Update the action count totals for all objects, for good measure
     cursor.execute("""
@@ -71,7 +71,7 @@ def update_actioncounter_counts():
         GROUP BY content_type_id, object_pk, name
     """)
     for row in cursor.fetchall():
-        get_update(row[0], row[1])['%s_total' % row[2]] = row[3]
+        get_update(row[0], row[1])[f'{row[2]}_total'] = row[3]
 
     # Finally, perform all the counter updates within a transaction...
     @transaction.commit_on_success

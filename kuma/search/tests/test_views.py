@@ -135,12 +135,11 @@ class ViewTests(ElasticTestCase):
     def test_handled_exceptions(self):
 
         # These are instantiated with an error string.
-        for exc in [elasticsearch.ElasticsearchException,
+        for _ in [elasticsearch.ElasticsearchException,
                     elasticsearch.SerializationError,
                     elasticsearch.TransportError,
                     elasticsearch.NotFoundError,
                     elasticsearch.RequestError]:
-
             class ExceptionSearchView(SearchView):
                 filter_backends = ()
 
@@ -177,7 +176,7 @@ class ViewTests(ElasticTestCase):
 
     def test_tokenize_camelcase_titles(self):
         for q in ('get', 'element', 'by', 'id'):
-            response = self.client.get('/en-US/search?q=' + q)
+            response = self.client.get(f'/en-US/search?q={q}')
             eq_(response.status_code, 200)
             self.assertContains(response, 'camel-case-test')
 
@@ -185,6 +184,6 @@ class ViewTests(ElasticTestCase):
         self.client.login(username='admin', password='testpass')
         response = self.client.get('/en-US/search')
         eq_(response.status_code, 200)
-        self.assertContains(response,
-                            ('Search index: %s' %
-                             Index.objects.get_current().name))
+        self.assertContains(
+            response, f'Search index: {Index.objects.get_current().name}'
+        )

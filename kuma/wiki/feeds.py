@@ -55,7 +55,7 @@ class DocumentsFeed(Feed):
         return document.current_revision.summary
 
     def item_author_name(self, document):
-        return '%s' % document.current_revision.creator
+        return f'{document.current_revision.creator}'
 
     def item_author_link(self, document):
         return self.request.build_absolute_uri(
@@ -84,18 +84,24 @@ class DocumentJSONFeedGenerator(SyndicationFeed):
 
         # Check for a callback param, validate it before use
         callback = request.GET.get('callback', None)
-        if callback is not None:
-            if not valid_jsonp_callback_value(callback):
-                callback = None
+        if callback is not None and not valid_jsonp_callback_value(callback):
+            callback = None
 
         items_out = []
         for item in self.items:
             document = item['obj']
 
             # Include some of the simple elements from the preprocessed item
-            item_out = dict((x, item[x]) for x in (
-                'link', 'title', 'pubdate', 'author_name', 'author_link',
-            ))
+            item_out = {
+                x: item[x]
+                for x in (
+                    'link',
+                    'title',
+                    'pubdate',
+                    'author_name',
+                    'author_link',
+                )
+            }
 
             # HACK: DocumentFeed is the superclass of RevisionFeed. In this
             # case, current_revision is the revision itself.
@@ -108,18 +114,15 @@ class DocumentJSONFeedGenerator(SyndicationFeed):
 
             item_out['author_avatar'] = gravatar_url(revision.creator)
 
-            summary = revision.summary
-            if summary:
+            if summary := revision.summary:
                 item_out['summary'] = summary
 
-            # Linkify the tags used in the feed item
-            categories = dict(
-                (x, request.build_absolute_uri(
-                        reverse('kuma.wiki.views.list_documents',
-                                kwargs={'tag': x})))
+            if categories := {
+                x: request.build_absolute_uri(
+                    reverse('kuma.wiki.views.list_documents', kwargs={'tag': x})
+                )
                 for x in item['categories']
-            )
-            if categories:
+            }:
                 item_out['categories'] = categories
 
             #TODO: What else might be useful in a JSON feed of documents?
@@ -129,7 +132,7 @@ class DocumentJSONFeedGenerator(SyndicationFeed):
         data = items_out
 
         if callback:
-            outfile.write('%s(' % callback)
+            outfile.write(f'{callback}(')
         outfile.write(json.dumps(data, default=self._encode_complex))
         if callback:
             outfile.write(')')
@@ -146,7 +149,7 @@ class DocumentsRecentFeed(DocumentsFeed):
         self.category = category
         self.tag = tag
         if tag:
-            self.title = _('MDN recent changes to documents tagged %s' % tag)
+            self.title = _(f'MDN recent changes to documents tagged {tag}')
             self.link = self.request.build_absolute_uri(
                 reverse('wiki.tag', args=(tag,)))
         else:
@@ -174,7 +177,7 @@ class DocumentsReviewFeed(DocumentsRecentFeed):
         super(DocumentsReviewFeed, self).get_object(request, format)
         self.subtitle = None
         if tag:
-            self.title = _('MDN documents for %s review' % tag)
+            self.title = _(f'MDN documents for {tag} review')
             self.link = self.request.build_absolute_uri(
                 reverse('kuma.wiki.views.list_documents_for_review',
                         args=(tag,)))
@@ -205,8 +208,7 @@ class DocumentsUpdatedTranslationParentFeed(DocumentsFeed):
             .get_object(request, format))
         self.locale = request.locale
         self.subtitle = None
-        self.title = _("MDN '%s' translations in need of update" %
-                       self.locale)
+        self.title = _(f"MDN '{self.locale}' translations in need of update")
         # TODO: Need an HTML / dashboard version of this feed
         self.link = self.request.build_absolute_uri(
             reverse('kuma.wiki.views.list_documents'))
@@ -284,19 +286,14 @@ class RevisionsFeed(DocumentsFeed):
         return items.order_by('-created')[start:finish]
 
     def item_title(self, item):
-        return "%s (%s)" % (item.document.full_path, item.document.locale)
+        return f"{item.document.full_path} ({item.document.locale})"
 
     def item_description(self, item):
         # TODO: put this in a jinja template if django syndication will let us
         previous = item.get_previous()
-        action = "Edited"
-        if previous is None:
-            action = "Created"
-        by = '<h3>%s by:</h3><p>%s</p>' % (action, item.creator.username)
-        comment = ''
-        if item.comment:
-            comment = '<h3>Comment:</h3><p>%s</p>' % item.comment
-
+        action = "Created" if previous is None else "Edited"
+        by = f'<h3>{action} by:</h3><p>{item.creator.username}</p>'
+        comment = f'<h3>Comment:</h3><p>{item.comment}</p>' if item.comment else ''
         review_diff = ''
         tag_diff = ''
         content_diff = ''
@@ -307,13 +304,11 @@ class RevisionsFeed(DocumentsFeed):
             curr_review_tags = ','.join(
                 [x.name for x in item.review_tags.all()])
             if prev_review_tags != curr_review_tags:
-                review_diff = ("<h3>Review changes:</h3>%s" % tag_diff_table(
-                    prev_review_tags, curr_review_tags, previous.id, item.id))
+                review_diff = f"<h3>Review changes:</h3>{tag_diff_table(prev_review_tags, curr_review_tags, previous.id, item.id)}"
                 review_diff = colorize_diff(review_diff)
 
             if previous.tags != item.tags:
-                tag_diff = ("<h3>Tag changes:</h3>%s" % tag_diff_table(
-                    previous.tags, item.tags, previous.id, item.id))
+                tag_diff = f"<h3>Tag changes:</h3>{tag_diff_table(previous.tags, item.tags, previous.id, item.id)}"
                 tag_diff = colorize_diff(tag_diff)
 
         previous_content = ''
@@ -323,8 +318,9 @@ class RevisionsFeed(DocumentsFeed):
             previous_content = previous.content
             previous_id = previous.id
             if previous_content != item.content:
-                content_diff = content_diff + diff_table(
-                    previous_content, item.content, previous_id, item.id)
+                content_diff += diff_table(
+                    previous_content, item.content, previous_id, item.id
+                )
                 content_diff = colorize_diff(content_diff)
         else:
             content_diff = content_diff + cgi.escape(item.content, quote=True)
@@ -348,14 +344,9 @@ class RevisionsFeed(DocumentsFeed):
                                          args=[item.document.full_path]),
                                  _('History'))
         links_table = '<table border="0" width="80%">'
-        links_table = links_table + '<tr>%s%s%s%s</tr>' % (view_cell,
-                                                           edit_cell,
-                                                           compare_cell,
-                                                           history_cell)
-        links_table = links_table + '</table>'
-        description = "%s%s%s%s%s%s" % (by, comment, tag_diff, review_diff,
-                                        content_diff, links_table)
-        return description
+        links_table += f'<tr>{view_cell}{edit_cell}{compare_cell}{history_cell}</tr>'
+        links_table += '</table>'
+        return f"{by}{comment}{tag_diff}{review_diff}{content_diff}{links_table}"
 
     def item_link(self, item):
         return self.request.build_absolute_uri(
@@ -366,7 +357,7 @@ class RevisionsFeed(DocumentsFeed):
         return item.created
 
     def item_author_name(self, item):
-        return '%s' % item.creator
+        return f'{item.creator}'
 
     def item_author_link(self, item):
         return self.request.build_absolute_uri(item.creator.get_absolute_url())

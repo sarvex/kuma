@@ -65,7 +65,7 @@ class Attachment(models.Model):
             'attachment_id': self.id,
             'filename': self.current_revision.filename(),
         })
-        return '%s%s%s' % (settings.PROTOCOL, settings.ATTACHMENT_HOST, uri)
+        return f'{settings.PROTOCOL}{settings.ATTACHMENT_HOST}{uri}'
 
     def attach(self, document, user, name):
         if self.id not in document.attachments.values_list('id', flat=True):
@@ -93,10 +93,13 @@ class Attachment(models.Model):
         """
         rev = self.current_revision
         env = jingo.get_env()
-        t = env.select_template([
-            'attachments/attachments/%s.html' % rev.mime_type.replace('/', '_'),
-            'attachments/attachments/%s.html' % rev.mime_type.split('/')[0],
-            'attachments/attachments/generic.html'])
+        t = env.select_template(
+            [
+                f"attachments/attachments/{rev.mime_type.replace('/', '_')}.html",
+                f"attachments/attachments/{rev.mime_type.split('/')[0]}.html",
+                'attachments/attachments/generic.html',
+            ]
+        )
         return t.render({'attachment': rev})
 
 

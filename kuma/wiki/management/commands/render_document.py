@@ -50,11 +50,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.options = options
         self.base_url = options['baseurl'] or absolutify('')
-        if self.options['nocache']:
-            self.cache_control = 'no-cache'
-        else:
-            self.cache_control = 'max-age=0'
-
+        self.cache_control = 'no-cache' if self.options['nocache'] else 'max-age=0'
         if options['all']:
             # Query all documents, excluding those whose `last_rendered_at` is
             # within `min_render_age` or NULL.
@@ -70,7 +66,7 @@ class Command(BaseCommand):
             self.chain_render_docs(docs)
 
         else:
-            if not len(args) == 1:
+            if len(args) != 1:
                 raise CommandError('Need at least one document path to render')
             for path in args:
                 # Accept a single page path from command line, but be liberal
@@ -83,7 +79,7 @@ class Command(BaseCommand):
                 if head == 'docs':
                     slug = tail
                 doc = Document.objects.get(locale=locale, slug=slug)
-                log.info(u'Rendering %s (%s)' % (doc, doc.get_absolute_url()))
+                log.info(f'Rendering {doc} ({doc.get_absolute_url()})')
                 try:
                     render_document(doc.pk, self.cache_control, self.base_url,
                                     self.options['force'])

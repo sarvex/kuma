@@ -25,16 +25,14 @@ def parse_robots(base_url):
         these acceptance tests.
     """
     rules = []
-    robots = shlex.shlex(urllib2.urlopen("%s/robots.txt" % base_url))
+    robots = shlex.shlex(urllib2.urlopen(f"{base_url}/robots.txt"))
     robots.whitespace_split = True
-    token = robots.get_token()
-    while token:
+    while token := robots.get_token():
         rule = None
         if token[-1] == ':':
-            rule = (token[0:-1], robots.get_token())
+            rule = token[:-1], robots.get_token()
         if rule:
             rules.append(rule)
-        token = robots.get_token()
     return rules
 
 
@@ -54,37 +52,10 @@ class TestDevMoRobots(KumaTestCase):
     def test_production(self):
         # Skip this test, because it runs against external sites and breaks.
         raise SkipTest()
-        rules = [
-            ("User-Agent", "*"),
-            ("Crawl-delay", "5"),
-            ("Sitemap", "sitemap.xml"),
-            ("Request-rate", "1/5"),
-            ("Disallow", "/@api/deki/*"),
-            ("Disallow", "/*feed=rss"),
-            ("Disallow", "/*type=feed"),
-            ("Disallow", "/skins"),
-            ("Disallow", "/template:"),
-        ]
-        eq_(parse_robots('http://developer.mozilla.org'), rules)
-        eq_(parse_robots('https://developer.mozilla.org'), rules)
 
     def test_stage_bug607996(self):
         # Skip this test, because it runs against external sites and breaks.
         raise SkipTest()
-        rules = [
-            ("User-agent", "*"),
-            ("Disallow", "/"),
-        ]
-
-        # TODO: update to kuma when kuma staging server is up
-        # No https://mdn.staging.mozilla.com, this serves up Kuma
-        eq_(parse_robots('http://mdn.staging.mozilla.com'), rules)
-
-        eq_(parse_robots('https://developer-stage.mozilla.org'), rules)
-        eq_(parse_robots('http://developer-stage.mozilla.org'), rules)
-
-        eq_(parse_robots('https://developer-stage9.mozilla.org'), rules)
-        eq_(parse_robots('http://developer-stage9.mozilla.org'), rules)
 
 
 class TestDevMoNextUrl(KumaTestCase):

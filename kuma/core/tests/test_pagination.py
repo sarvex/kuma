@@ -9,21 +9,19 @@ from ..helpers import paginator
 
 def test_paginated_url():
     """Avoid duplicating page param in pagination."""
-    url = '%s?%s' % (reverse('search'), 'q=bookmarks&page=2')
+    url = f"{reverse('search')}?q=bookmarks&page=2"
     request = RequestFactory().get(url)
     queryset = [{}, {}]
     paginated = paginate(request, queryset)
-    eq_(paginated.url,
-        request.build_absolute_uri(request.path) + '?q=bookmarks')
+    eq_(paginated.url, f'{request.build_absolute_uri(request.path)}?q=bookmarks')
 
 
 def test_invalid_page_param():
-    url = '%s?%s' % (reverse('search'), 'page=a')
+    url = f"{reverse('search')}?page=a"
     request = RequestFactory().get(url)
     queryset = range(100)
     paginated = paginate(request, queryset)
-    eq_(paginated.url,
-        request.build_absolute_uri(request.path) + '?')
+    eq_(paginated.url, f'{request.build_absolute_uri(request.path)}?')
 
 
 def test_paginator_filter():
@@ -37,7 +35,7 @@ def test_paginator_filter():
     eq_(11, len(doc('li')))
 
     # Correct number of <li>s in the middle.
-    url = '%s?%s' % (reverse('search'), 'page=10')
+    url = f"{reverse('search')}?page=10"
     request = RequestFactory().get(url)
     pager = paginate(request, range(200), per_page=10)
     html = paginator(pager)

@@ -52,8 +52,7 @@ def persona_login(request):
     querystring = QueryDict('', mutable=True)
     for param in ('next', 'process'):
         querystring[param] = request.POST.get(param, '')
-    return redirect('%s?%s' % (reverse('persona_complete'),
-                               querystring.urlencode('/')))
+    return redirect(f"{reverse('persona_complete')}?{querystring.urlencode('/')}")
 
 
 def persona_complete(request):

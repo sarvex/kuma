@@ -85,7 +85,7 @@ class DocumentTests(UserTestCase, WikiTestCase):
         eq_(200, response.status_code)
         doc = pq(response.content)
         eq_(d2.title, doc('main#content div.document-head h1').text())
-        crumbs = "MDN %s %s" % (d1.title, d2.title)
+        crumbs = f"MDN {d1.title} {d2.title}"
         eq_(crumbs, doc('nav.crumbs').text())
 
     def test_english_document_no_approved_content(self):
@@ -257,9 +257,8 @@ class RevisionTests(UserTestCase, WikiTestCase):
         response = self.client.get(url)
         eq_(200, response.status_code)
         doc = pq(response.content)
-        eq_('Revision id: %s' % r.id,
-            doc('div.revision-info li.revision-id').text())
-        eq_('Revision %s of %s' % (r.id, d.title), doc('h1').text())
+        eq_(f'Revision id: {r.id}', doc('div.revision-info li.revision-id').text())
+        eq_(f'Revision {r.id} of {d.title}', doc('h1').text())
         eq_(r.content,
             doc('#doc-source pre').text())
         eq_('Created: Jan 1, 2011 12:00:00 AM',
@@ -328,8 +327,7 @@ class NewDocumentTests(UserTestCase, WikiTestCase):
         response = self.client.post(reverse('wiki.new_document'), data,
                                     follow=True)
         d = Document.objects.get(title=data['title'])
-        eq_([('http://testserver/en-US/docs/%s' % d.slug, 302)],
-            response.redirect_chain)
+        eq_([(f'http://testserver/en-US/docs/{d.slug}', 302)], response.redirect_chain)
         eq_(settings.WIKI_DEFAULT_LANGUAGE, d.locale)
         eq_(data['category'], d.category)
         eq_(tags, sorted(t.name for t in d.tags.all()))
@@ -427,7 +425,7 @@ class NewDocumentTests(UserTestCase, WikiTestCase):
         d = _create_document()
         self.client.login(username='admin', password='testpass')
         data = new_document_data()
-        data['slug'] = '%s-once-more-with-feeling' % d.slug
+        data['slug'] = f'{d.slug}-once-more-with-feeling'
         response = self.client.post(reverse('wiki.new_document'), data)
         eq_(302, response.status_code)
 
@@ -530,15 +528,17 @@ class NewRevisionTests(UserTestCase, WikiTestCase):
 
         edited_email = mail.outbox[1]
         expected_to = [u'sam@example.com']
-        expected_subject = u'[MDN] Page "%s" changed by %s' % (self.d.title,
-                                                     new_rev.creator)
+        expected_subject = f'[MDN] Page "{self.d.title}" changed by {new_rev.creator}'
         eq_(expected_subject, edited_email.subject)
         eq_(expected_to, edited_email.to)
-        ok_('%s changed %s.' % (unicode(self.username), unicode(self.d.title))
-            in edited_email.body)
-        ok_(u'https://testserver/en-US/docs/%s$history?utm_campaign=' %
-                                                                    self.d.slug
-            in edited_email.body)
+        ok_(
+            f'{unicode(self.username)} changed {unicode(self.d.title)}.'
+            in edited_email.body
+        )
+        ok_(
+            f'https://testserver/en-US/docs/{self.d.slug}$history?utm_campaign='
+            in edited_email.body
+        )
 
     @mock.patch.object(EditDocumentEvent, 'fire')
     @mock.patch.object(Site.objects, 'get_current')
@@ -574,8 +574,7 @@ class NewRevisionTests(UserTestCase, WikiTestCase):
         self.d.save()
         tags = [u'tag1', u'tag2', u'tag3']
         self.d.tags.add(*tags)
-        result_tags = list(self.d.tags.values_list('name', flat=True))
-        result_tags.sort()
+        result_tags = sorted(self.d.tags.values_list('name', flat=True))
         eq_(tags, result_tags)
         tags = [u'tag1', u'tag4']
         data = new_document_data(tags)
@@ -583,8 +582,7 @@ class NewRevisionTests(UserTestCase, WikiTestCase):
         self.client.post(reverse('wiki.edit_document',
                                  args=[self.d.full_path]),
                         data)
-        result_tags = list(self.d.tags.values_list('name', flat=True))
-        result_tags.sort()
+        result_tags = sorted(self.d.tags.values_list('name', flat=True))
         eq_(tags, result_tags)
 
     def test_new_form_maintains_based_on_rev(self):
@@ -805,7 +803,7 @@ class TranslateTests(UserTestCase, WikiTestCase):
         translate_uri = reverse('wiki.translate',
                                 locale='en-US',
                                 args=[translate_path])
-        return '%s?tolocale=%s' % (translate_uri, 'es')
+        return f'{translate_uri}?tolocale=es'
 
     def test_translate_GET_logged_out(self):
         """Try to create a translation while logged out."""
@@ -930,12 +928,6 @@ class TranslateTests(UserTestCase, WikiTestCase):
         Translate button was clicked, even if other revisions happen while the
         user is editing."""
         raise SkipTest("Figure out WTF is going on with this one.")
-        _test_form_maintains_based_on_rev(self.client,
-                                          self.d,
-                                          'wiki.translate',
-                                          _translation_data(),
-                                          trans_lang='es',
-                                          locale='en-US')
 
     def test_translate_update_doc_only(self):
         """Submitting the document form should update document. No new
@@ -987,22 +979,6 @@ class TranslateTests(UserTestCase, WikiTestCase):
 
     def test_translate_based_on(self):
         raise SkipTest("Figure out WTF is going on with this one.")
-        """Test translating based on a non-current revision."""
-        # Create the base revision
-        base_rev = self._create_and_approve_first_translation()
-        # Create a new current revision
-        r = revision(document=base_rev.document, is_approved=True)
-        r.save()
-        d = Document.objects.get(pk=base_rev.document.id)
-        eq_(r, base_rev.document.current_revision)
-
-        uri = reverse('wiki.new_revision_based_on',
-                      locale=d.locale,
-                      args=[d.slug, base_rev.id])
-        response = self.client.get(uri)
-        eq_(200, response.status_code)
-        doc = pq(response.content)
-        eq_(doc('#id_content')[0].value, base_rev.content)
 
 
 def _test_form_maintains_based_on_rev(client, doc, view, post_data,
@@ -1030,7 +1006,7 @@ def _test_form_maintains_based_on_rev(client, doc, view, post_data,
 
     # Then Fred saves his edit:
     post_data_copy = {'based_on': orig_rev.id, 'slug': orig_rev.slug}
-    post_data_copy.update(post_data)  # Don't mutate arg.
+    post_data_copy |= post_data
     response = client.post(uri,
                            data=post_data_copy)
     ok_(response.status_code in (200, 302))
@@ -1061,18 +1037,6 @@ class ArticlePreviewTests(UserTestCase, WikiTestCase):
 
     def test_preview_locale(self):
         raise SkipTest
-        """Preview the wiki syntax content."""
-        # Create a test document and translation.
-        d = _create_document()
-        _create_document(title='Prueba', parent=d, locale='es')
-        # Preview content that links to it and verify link is in locale.
-        url = reverse('wiki.preview', locale='es')
-        response = self.client.post(url, {'content': '[[Test Document]]'})
-        eq_(200, response.status_code)
-        doc = pq(response.content)
-        link = doc('#doc-content a')
-        eq_('Prueba', link.text())
-        eq_('/es/docs/prueba', link[0].attrib['href'])
 
 
 class HelpfulVoteTests(UserTestCase, SkippedTestCase):
@@ -1174,19 +1138,19 @@ class RevisionDeleteTestCase(UserTestCase, SkippedTestCase):
                        args=[self.d.slug, self.r.id])
         redirect = response.redirect_chain[0]
         eq_(302, redirect[1])
-        eq_('http://testserver/%s%s?next=/en-US/docs/%s/revision/%s/delete' %
-            (settings.LANGUAGE_CODE, settings.LOGIN_URL, self.d.slug,
-                self.r.id),
-            redirect[0])
+        eq_(
+            f'http://testserver/{settings.LANGUAGE_CODE}{settings.LOGIN_URL}?next=/en-US/docs/{self.d.slug}/revision/{self.r.id}/delete',
+            redirect[0],
+        )
 
         response = post(self.client, 'wiki.delete_revision',
                         args=[self.d.slug, self.r.id])
         redirect = response.redirect_chain[0]
         eq_(302, redirect[1])
-        eq_('http://testserver/%s%s?next=/en-US/docs/%s/revision/%s/delete' %
-            (settings.LANGUAGE_CODE, settings.LOGIN_URL, self.d.slug,
-                self.r.id),
-            redirect[0])
+        eq_(
+            f'http://testserver/{settings.LANGUAGE_CODE}{settings.LOGIN_URL}?next=/en-US/docs/{self.d.slug}/revision/{self.r.id}/delete',
+            redirect[0],
+        )
 
     def test_delete_revision_with_permissions(self):
         """Deleting a revision with permissions should work."""

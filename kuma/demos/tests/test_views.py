@@ -24,8 +24,7 @@ from ..tests import make_users, build_submission, build_hidden_submission
 
 from .test_models import save_valid_submission
 
-SCREENSHOT_PATH = ('%s/fixtures/screenshot_1.png' %
-        dirname(dirname(__file__)))
+SCREENSHOT_PATH = f'{dirname(dirname(__file__))}/fixtures/screenshot_1.png'
 TESTUSER_PASSWORD = 'trustno1'
 
 
@@ -161,7 +160,7 @@ class DemoViewsTest(UserTestCase):
     def test_edit_invalid(self):
         s = save_valid_submission()
         edit_url = reverse('demos_edit', args=[s.slug])
-        r = self.client.post(edit_url, data=dict())
+        r = self.client.post(edit_url, data={})
         d = pq(r.content)
         assert d('form#demo-submit')
         assert d('li#field_title ul.errorlist')
@@ -296,9 +295,9 @@ class DemoViewsTest(UserTestCase):
             datetime.date(2012, 2, 29))
 
     def test_challenge_closed(self):
-        open_tag = 'challenge:%s' % make_challenge_tag()
+        open_tag = f'challenge:{make_challenge_tag()}'
         closed_dt = datetime.date.today() - datetime.timedelta(days=32)
-        closed_tag = 'challenge:%s' % closed_dt.strftime('%Y:%B').lower()
+        closed_tag = f"challenge:{closed_dt.strftime('%Y:%B').lower()}"
         assert not challenge_utils.challenge_closed([open_tag])
         assert challenge_utils.challenge_closed([closed_tag])
 

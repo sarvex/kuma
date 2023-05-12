@@ -6,11 +6,10 @@ from .models import Key, KeyAction
 
 
 def history_link(self):
-    url = '%s?%s' % (reverse('admin:authkeys_keyaction_changelist'),
-                     'key__exact=%s' % (self.id))
+    url = f"{reverse('admin:authkeys_keyaction_changelist')}?key__exact={self.id}"
     count = self.history.count()
-    what = (count == 1) and 'action' or 'actions'
-    return '<a href="%s">%s&nbsp;%s</a>' % (url, count, what)
+    what = 'action' if count == 1 else 'actions'
+    return f'<a href="{url}">{count}&nbsp;{what}</a>'
 
 history_link.allow_tags = True
 history_link.short_description = 'Usage history'
@@ -28,7 +27,7 @@ def key_link(self):
     key = self.key
     url = reverse('admin:authkeys_key_change',
                   args=[key.id])
-    return '<a href="%s">%s (#%s)</a>' % (url, key.user, key.id)
+    return f'<a href="{url}">{key.user} (#{key.id})</a>'
 
 key_link.allow_tags = True
 key_link.short_description = 'Key'
@@ -36,10 +35,9 @@ key_link.short_description = 'Key'
 
 def content_object_link(self):
     obj = self.content_object
-    url_key = 'admin:%s_%s_change' % (obj._meta.app_label,
-                                      obj._meta.module_name)
+    url_key = f'admin:{obj._meta.app_label}_{obj._meta.module_name}_change'
     url = reverse(url_key, args=[obj.id])
-    return '<a href="%s">%s (#%s)</a>' % (url, self.content_type, obj.pk)
+    return f'<a href="{url}">{self.content_type} (#{obj.pk})</a>'
 
 content_object_link.allow_tags = True
 content_object_link.short_description = 'Object'

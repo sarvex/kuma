@@ -95,17 +95,16 @@ class KeyViewsTest(RefetchingUserTestCase):
         page = pq(resp.content)
 
         for ct, key in ((1, self.key1), (1, self.key2), (0, self.key3)):
-            key_row = page.find('.option-list #key-%s' % key.pk)
+            key_row = page.find(f'.option-list #key-{key.pk}')
             eq_(ct, key_row.length)
             if ct > 0:
                 eq_(key.description, key_row.find('.description').text())
 
     def test_key_history(self):
-        # Assemble some sample log lines
-        log_lines = []
-        for i in range(0, ITEMS_PER_PAGE * 2):
-            log_lines.append(('ping', self.user2, 'Number #%s' % i))
-
+        log_lines = [
+            ('ping', self.user2, f'Number #{i}')
+            for i in range(0, ITEMS_PER_PAGE * 2)
+        ]
         # Record the log lines for this key
         for l in log_lines:
             self.key1.log(*l)
@@ -129,7 +128,7 @@ class KeyViewsTest(RefetchingUserTestCase):
                         row.find('.object').text(),
                         row.find('.notes').text())
                 eq_(expected[0], line[0])
-                ok_('%s' % expected[1] in line[1])
+                ok_(f'{expected[1]}' in line[1])
                 eq_(expected[2], line[2])
 
     def test_delete_key(self):

@@ -1,4 +1,5 @@
 """Models for content moderation flagging"""
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
@@ -33,9 +34,7 @@ FLAG_STATUSES = getattr(settings, "FLAG_STATUSES", (
     (FLAG_STATUS_DELETED, _("Content deleted by moderator")),
 ))
 
-FLAG_NOTIFICATIONS = {}
-for reason in FLAG_REASONS:
-    FLAG_NOTIFICATIONS[reason[0]] = True
+FLAG_NOTIFICATIONS = {reason[0]: True for reason in FLAG_REASONS}
 # to refine flag notifications, change preceding line to False and add
 # individual reasons to the set like so:
 # FLAG_NOTIFICATIONS['inappropriate'] = True
@@ -66,7 +65,7 @@ class ContentFlagManager(models.Manager):
             subject = _("{object} Flagged")
             subject = subject.format(object=object)
             t = loader.get_template('contentflagging/email/flagged.ltxt')
-            url = '/admin/contentflagging/contentflag/' + str(object.pk)
+            url = f'/admin/contentflagging/contentflag/{str(object.pk)}'
             content = t.render(Context({'url': url,
                                         'object': object,
                                         'flag_type': flag_type}))

@@ -26,11 +26,11 @@ class ActionCounterField(models.IntegerField):
 
         self.total_field = models.IntegerField(editable=False, default=0,
                                                blank=True, db_index=True)
-        cls.add_to_class('%s_total' % (self.name,), self.total_field)
+        cls.add_to_class(f'{self.name}_total', self.total_field)
 
         self.recent_field = models.IntegerField(editable=False, default=0,
                                                 blank=True, db_index=True)
-        cls.add_to_class('%s_recent' % (self.name,), self.recent_field)
+        cls.add_to_class(f'{self.name}_recent', self.recent_field)
 
         # TODO: Could maybe include a JSON-formatted history list of recent rollups
 
@@ -44,8 +44,8 @@ class ActionCounterField(models.IntegerField):
 class ActionCounterCreator(object):
     def __init__(self, field):
         self.field = field
-        self.votes_field_name = "%s_votes" % (self.field.name,)
-        self.score_field_name = "%s_score" % (self.field.name,)
+        self.votes_field_name = f"{self.field.name}_votes"
+        self.score_field_name = f"{self.field.name}_score"
 
     def __get__(self, instance, type=None):
         if instance is None:
@@ -64,8 +64,8 @@ class ActionCounterManager(object):
         self.field = field
         self.name = field.name
 
-        self.total_field_name = "%s_total" % (self.name,)
-        self.recent_field_name = "%s_recent" % (self.name,)
+        self.total_field_name = f"{self.name}_total"
+        self.recent_field_name = f"{self.name}_recent"
 
     def _get_total(self, default=0):
         return getattr(self.instance, self.total_field_name, default)
@@ -95,16 +95,16 @@ class ActionCounterManager(object):
 
     def increment(self, request):
         counter = self._get_counter_for_request(request)
-        ok = counter.increment(self.field.min_total_per_unique,
-                self.field.max_total_per_unique)
-        if ok:
+        if ok := counter.increment(
+            self.field.min_total_per_unique, self.field.max_total_per_unique
+        ):
             self._change_total(1)
 
     def decrement(self, request):
         counter = self._get_counter_for_request(request)
-        ok = counter.decrement(self.field.min_total_per_unique,
-                self.field.max_total_per_unique)
-        if ok:
+        if ok := counter.decrement(
+            self.field.min_total_per_unique, self.field.max_total_per_unique
+        ):
             self._change_total(-1)
 
     def _change_total(self, delta):
@@ -118,9 +118,7 @@ class ActionCounterManager(object):
         # TODO: Find a less-ugly way to do this.
         m_cls = self.instance.__class__
         qs = m_cls.objects.all().filter(pk=self.instance.pk)
-        update_kwargs = {
-            "%s" % self.total_field_name: F(self.total_field_name) + delta
-        }
+        update_kwargs = {f"{self.total_field_name}": F(self.total_field_name) + delta}
         qs.update(**update_kwargs)
 
         # HACK: This value change is just for the benefit of local code,

@@ -23,9 +23,14 @@ def context_dict(revision):
 
     compare_url = ''
     if from_revision:
-        compare_url = (reverse('wiki.compare_revisions',
-            args=[document.full_path], locale=document.locale)
-            + '?from=%s&to=%s' % (from_revision.id, to_revision.id))
+        compare_url = (
+            reverse(
+                'wiki.compare_revisions',
+                args=[document.full_path],
+                locale=document.locale,
+            )
+            + f'?from={from_revision.id}&to={to_revision.id}'
+        )
 
     link_urls = {
         'profile_url': revision.creator.get_absolute_url(),
@@ -45,14 +50,11 @@ def context_dict(revision):
         url = add_utm(url, 'Wiki Doc Edits')
         link_urls[name] = url
 
-    context = {
+    return {
         'document_title': document.title,
         'creator': revision.creator,
-        'diff': diff
-    }
-    context.update(link_urls)
-
-    return context
+        'diff': diff,
+    } | link_urls
 
 
 class EditDocumentEvent(InstanceEvent):
@@ -67,8 +69,7 @@ class EditDocumentEvent(InstanceEvent):
     def _mails(self, users_and_watches):
         revision = self.revision
         document = revision.document
-        log.debug('Sending edited notification email for document (id=%s)' %
-                  document.id)
+        log.debug(f'Sending edited notification email for document (id={document.id})')
         subject = _(u'[MDN] Page "{document_title}" changed by {creator}')
         context = context_dict(revision)
 

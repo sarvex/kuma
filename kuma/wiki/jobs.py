@@ -37,9 +37,7 @@ class DocumentZoneURLRemapsJob(KumaJob):
         zones = (DocumentZone.objects.filter(document__locale=locale,
                                              url_root__isnull=False)
                                      .exclude(url_root=''))
-        remaps = [('/docs/%s' % zone.document.slug, '/%s' % zone.url_root)
-                  for zone in zones]
-        return remaps
+        return [(f'/docs/{zone.document.slug}', f'/{zone.url_root}') for zone in zones]
 
     def empty(self):
         # the empty result needs to be an empty list instead of None

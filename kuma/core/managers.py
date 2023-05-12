@@ -46,17 +46,23 @@ class _PrefetchTaggableManager(_TaggableManager):
                                           if issubclass(self.through,
                                                         GenericTaggedItemBase)
                                           else 'content_object')
-        pk_set = set(obj._get_pk_val() for obj in instances)
-        query = {'%s__%s__in' % (self.through.tag_relname(), fk.name): pk_set}
+        pk_set = {obj._get_pk_val() for obj in instances}
+        query = {f'{self.through.tag_relname()}__{fk.name}__in': pk_set}
         join_table = self.through._meta.db_table
         source_col = fk.column
         connection = connections[db]
         qn = connection.ops.quote_name
-        qs = self.get_query_set().using(db)._next_is_sticky().filter(
-            **query
-        ).extra(select={
-            '_prefetch_related_val': '%s.%s' % (qn(join_table), qn(source_col))
-        })
+        qs = (
+            self.get_query_set()
+            .using(db)
+            ._next_is_sticky()
+            .filter(**query)
+            .extra(
+                select={
+                    '_prefetch_related_val': f'{qn(join_table)}.{qn(source_col)}'
+                }
+            )
+        )
         return (qs,
                 operator.attrgetter('_prefetch_related_val'),
                 operator.attrgetter(instance._meta.pk.name),
@@ -67,14 +73,15 @@ class _PrefetchTaggableManager(_TaggableManager):
 class PrefetchTaggableManager(TaggableManager):
     def __get__(self, instance, model):
         if instance is not None and instance.pk is None:
-            raise ValueError("%s objects need to have a primary key value "
-                             "before you can access their tags." %
-                             model.__name__)
-        manager = _PrefetchTaggableManager(through=self.through,
-                                           model=model,
-                                           instance=instance,
-                                           prefetch_cache_name=self.name)
-        return manager
+            raise ValueError(
+                f"{model.__name__} objects need to have a primary key value before you can access their tags."
+            )
+        return _PrefetchTaggableManager(
+            through=self.through,
+            model=model,
+            instance=instance,
+            prefetch_cache_name=self.name,
+        )
 
 
 class NamespacedTaggableManager(TaggableManager):
@@ -89,12 +96,12 @@ class NamespacedTaggableManager(TaggableManager):
 
     def __get__(self, instance, model):
         if instance is not None and instance.pk is None:
-            raise ValueError("%s objects need to have a primary key value "
-                "before you can access their tags." % model.__name__)
-        manager = _NamespacedTaggableManager(
+            raise ValueError(
+                f"{model.__name__} objects need to have a primary key value before you can access their tags."
+            )
+        return _NamespacedTaggableManager(
             through=self.through, model=model, instance=instance
         )
-        return manager
 
 
 class _NamespacedTaggableManager(_TaggableManager):
@@ -174,18 +181,17 @@ class _NamespacedTaggableManager(_TaggableManager):
         Namespace is tag name text up to and including the last
         occurrence of ':'
         """
-        if (':' in tag.name):
-            (ns, name) = tag.name.rsplit(':', 1)
-            return ('%s:' % ns, name)
-        else:
+        if ':' not in tag.name:
             return ('', tag.name)
+        (ns, name) = tag.name.rsplit(':', 1)
+        return f'{ns}:', name
 
     def _ensure_ns(self, namespace, tags):
         """Ensure each tag name in the list starts with the given namespace"""
         ns_tags = []
         for t in tags:
             if not t.startswith(namespace):
-                t = '%s%s' % (namespace, t)
+                t = f'{namespace}{t}'
             ns_tags.append(t)
         return ns_tags
 
@@ -194,7 +200,7 @@ def parse_tag_namespaces(tag_list):
     """Parse a list of tags out into a dict of lists by namespace"""
     namespaces = {}
     for tag in tag_list:
-        ns = (':' in tag) and ('%s:' % tag.rsplit(':', 1)[0]) or ''
+        ns = ':' in tag and f"{tag.rsplit(':', 1)[0]}:" or ''
         if ns not in namespaces:
             namespaces[ns] = []
         namespaces[ns].append(tag)
@@ -206,9 +212,7 @@ def allows_tag_namespace_for(model_obj, ns, user):
     if user.is_staff or user.is_superuser:
         # Staff / superuser can manage any tag namespace
         return True
-    if not ns.startswith('system:'):
-        return True
-    return False
+    return not ns.startswith('system:')
 
 
 def resolve_allowed_tags(model_obj, tags_curr, tags_new,

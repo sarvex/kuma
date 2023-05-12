@@ -26,12 +26,7 @@ class SearchQuerySerializer(serializers.Serializer):
         The 'highlight' value should only be 'true' (default) or 'false'.
         """
         value = attrs.get(source)
-        if value and value == 'false':
-            value = False
-        else:
-            # If empty or any value other than 'false', we default to
-            # highlighting enabled.
-            value = True
+        value = not value or value != 'false'
         attrs[source] = value
         return attrs
 

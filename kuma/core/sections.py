@@ -45,11 +45,8 @@ class SECTION_HACKS:
 
 SECTION_USAGE = _sections = (SECTION_HACKS,)
 
-SECTIONS = dict((section.short, section)
-                for section in _sections)
+SECTIONS = {section.short: section for section in _sections}
 
-SECTIONS_TWITTER = dict((section.twitter, section)
-                        for section in _sections)
+SECTIONS_TWITTER = {section.twitter: section for section in _sections}
 
-SECTIONS_UPDATES = dict((section.updates, section)
-                        for section in _sections)
+SECTIONS_UPDATES = {section.updates: section for section in _sections}

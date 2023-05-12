@@ -15,7 +15,7 @@ class MultiQuerySet(object):
 
     def count(self):
         if not self._count:
-            self._count = sum([qs.count() for qs in self.querysets])
+            self._count = sum(qs.count() for qs in self.querysets)
         return self._count
 
     def __len__(self):
@@ -26,8 +26,7 @@ class MultiQuerySet(object):
 
     def __iter__(self):
         for qs in self.querysets:
-            for item in qs.all():
-                yield item
+            yield from qs.all()
 
     def __getitem__(self, item):
         offset, stop, step = item.indices(self.count())
@@ -40,9 +39,8 @@ class MultiQuerySet(object):
                 items += list(qs[offset:offset + total_len - len(items)])
                 if len(items) >= total_len:
                     return items
-                else:
-                    offset = 0
-                    continue
+                offset = 0
+                continue
 
 
 class TransformQuerySet(models.query.QuerySet):

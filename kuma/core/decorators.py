@@ -34,8 +34,7 @@ def user_access_decorator(redirect_func, redirect_url_func, deny_func=None,
                 # Redirect back here afterwards?
                 if redirect_field:
                     path = urlquote(request.get_full_path())
-                    redirect_url = '%s?%s=%s' % (
-                        redirect_url, redirect_field, path)
+                    redirect_url = f'{redirect_url}?{redirect_field}={path}'
 
                 return HttpResponseRedirect(redirect_url)
 
@@ -43,6 +42,7 @@ def user_access_decorator(redirect_func, redirect_url_func, deny_func=None,
                 return HttpResponseForbidden()
 
             return view_fn(request, *args, **kwargs)
+
         return wraps(view_fn, assigned=available_attrs(view_fn))(_wrapped_view)
 
     return decorator

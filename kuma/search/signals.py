@@ -18,8 +18,7 @@ def render_done_handler(**kwargs):
     doc = kwargs['instance']
     if WikiDocumentType.should_update(doc):
         current_index = Index.objects.get_current()
-        outdated = current_index.record_outdated(doc)
-        if outdated:
+        if outdated := current_index.record_outdated(doc):
             log.info('Found a newer index and scheduled '
                      'indexing it after promotion.')
         doc_pks = set(doc.other_translations.values_list('pk', flat=True))

@@ -40,9 +40,10 @@ def _objects_eq(manager, list_):
 def redirect_rev(title, redirect_to):
     return revision(
         document=document(title=title, save=True),
-        content='REDIRECT [[%s]]' % redirect_to,
+        content=f'REDIRECT [[{redirect_to}]]',
         is_approved=True,
-        save=True)
+        save=True,
+    )
 
 
 class DocumentTests(UserTestCase):
@@ -304,7 +305,7 @@ class DocumentTests(UserTestCase):
 
     @attr('redirect')
     def test_redirect_url_allows_site_url(self):
-        href = "%s/en-US/Mozilla" % settings.SITE_URL
+        href = f"{settings.SITE_URL}/en-US/Mozilla"
         title = "Mozilla"
         html = REDIRECT_CONTENT % {'href': href, 'title': title}
         d = document(is_redirect=True, html=html)
@@ -370,20 +371,23 @@ class PermissionTests(KumaTestCase):
                 for expected, user in trials:
                     slug = slug_tmpl % user.username
                     if is_add:
-                        eq_(expected,
+                        eq_(
+                            expected,
                             Document.objects.allows_add_by(user, slug),
-                            'User %s %s able to create %s' % (
-                                user, msg[expected], slug))
+                            f'User {user} {msg[expected]} able to create {slug}',
+                        )
                     else:
                         doc = document(slug=slug, title=slug)
-                        eq_(expected,
+                        eq_(
+                            expected,
                             doc.allows_revision_by(user),
-                            'User %s %s able to revise %s' % (
-                                user, msg[expected], slug))
-                        eq_(expected,
+                            f'User {user} {msg[expected]} able to revise {slug}',
+                        )
+                        eq_(
+                            expected,
                             doc.allows_editing_by(user),
-                            'User %s %s able to edit %s' % (
-                                user, msg[expected], slug))
+                            f'User {user} {msg[expected]} able to edit {slug}',
+                        )
 
 
 class DocumentTestsWithFixture(UserTestCase):
@@ -487,7 +491,7 @@ class DocumentTestsWithFixture(UserTestCase):
 
         for p in parents_5:
             ok_(p.current_revision)
-            if not p.pk in (trans_0.pk, trans_2.pk, trans_5.pk):
+            if p.pk not in (trans_0.pk, trans_2.pk, trans_5.pk):
                 ok_('NeedsTranslation' in p.current_revision.tags)
                 ok_('TopicStub' in p.current_revision.tags)
                 ok_(p.current_revision.localization_in_progress())
@@ -580,29 +584,29 @@ class RevisionTests(UserTestCase):
         """Creating an approved revision updates document.html"""
         d, _ = doc_rev('Replace document html')
 
-        assert 'Replace document html' in d.html, \
-               '"Replace document html" not in %s' % d.html
+        assert (
+            'Replace document html' in d.html
+        ), f'"Replace document html" not in {d.html}'
 
         # Creating another approved revision replaces it again
         r = revision(document=d, content='Replace html again',
                      is_approved=True)
         r.save()
 
-        assert 'Replace html again' in d.html, \
-               '"Replace html again" not in %s' % d.html
+        assert 'Replace html again' in d.html, f'"Replace html again" not in {d.html}'
 
     def test_unapproved_revision_not_updates_html(self):
         """Creating an unapproved revision does not update document.html"""
         d, _ = doc_rev('Here to stay')
 
-        assert 'Here to stay' in d.html, '"Here to stay" not in %s' % d.html
+        assert 'Here to stay' in d.html, f'"Here to stay" not in {d.html}'
 
         # Creating another approved revision keeps initial content
         r = revision(document=d, content='Fail to replace html',
                      is_approved=False)
         r.save()
 
-        assert 'Here to stay' in d.html, '"Here to stay" not in %s' % d.html
+        assert 'Here to stay' in d.html, f'"Here to stay" not in {d.html}'
 
     def test_revision_unicode(self):
         """Revision containing unicode characters is saved successfully."""
@@ -694,7 +698,7 @@ class RevisionTests(UserTestCase):
 
         reverted = d.revert(r, r.creator)
         ok_('Revert to' in reverted.comment)
-        ok_('Test reverting' == reverted.content)
+        ok_(reverted.content == 'Test reverting')
         ok_(old_id != reverted.id)
 
     def test_revert_review_tags(self):
@@ -900,38 +904,11 @@ class DeferredRenderingTests(UserTestCase):
         # FIXME
         # this was broken when render_done signal was introduced
         raise SkipTest("Skip for now")
-        mock_kumascript_get.return_value = (self.rendered_content, None)
-
-        # Initially empty json field should be filled in after render()
-        eq_(None, self.d1.json)
-        self.d1.render()
-        ok_(self.d1.json is not None)
-
-        time.sleep(0.1)  # Small clock-tick to age the results.
-
-        # Change the doc title, saving does not actually change the json field.
-        self.d1.title = "New title"
-        self.d1.save()
-        ok_(self.d1.title != self.d1.get_json_data()['title'])
-
-        # However, rendering refreshes the json field.
-        self.d1.render()
-        eq_(self.d1.title, self.d1.get_json_data()['title'])
 
     @mock.patch('kuma.wiki.kumascript.get')
     def test_get_summary(self, mock_kumascript_get):
         """get_summary() should attempt to use rendered"""
         raise SkipTest("Transient failures here, skip for now")
-
-        constance.config.KUMASCRIPT_TIMEOUT = 1.0
-        mock_kumascript_get.return_value = ('<p>summary!</p>', None)
-
-        ok_(not self.d1.rendered_html)
-        result_summary = self.d1.get_summary()
-        ok_(mock_kumascript_get.called)
-        eq_("summary!", result_summary)
-
-        constance.config.KUMASCRIPT_TIMEOUT = 0.0
 
     @mock.patch('kuma.wiki.kumascript.get')
     def test_one_render_at_a_time(self, mock_kumascript_get):
@@ -1536,7 +1513,7 @@ class PageMoveTests(UserTestCase):
         page_child_doc.save()
 
         # move page to new slug
-        new_title = page_to_move_title + ' Moved'
+        new_title = f'{page_to_move_title} Moved'
 
         page_to_move_doc._move_tree(page_moved_slug, user=None,
                                     title=new_title)
@@ -1605,7 +1582,7 @@ class PageMoveTests(UserTestCase):
     @attr('move')
     def test_move_special(self):
         root_slug = 'User:foo'
-        child_slug = '%s/child' % root_slug
+        child_slug = f'{root_slug}/child'
 
         new_root_slug = 'User:foobar'
 
@@ -1648,8 +1625,9 @@ class PageMoveTests(UserTestCase):
         moved_root = Document.objects.get(locale=special_root.locale,
                                           slug=new_root_slug)
         eq_(original_root_id, moved_root.id)
-        moved_child = Document.objects.get(locale=special_child.locale,
-                                           slug='%s/child' % new_root_slug)
+        moved_child = Document.objects.get(
+            locale=special_child.locale, slug=f'{new_root_slug}/child'
+        )
         eq_(original_child_id, moved_child.id)
 
         # Second move, back to original slug.
@@ -1659,8 +1637,9 @@ class PageMoveTests(UserTestCase):
         root_second_redirect = Document.objects.get(locale=special_root.locale,
                                                     slug=new_root_slug)
         ok_(root_second_redirect.is_redirect)
-        child_second_redirect = Document.objects.get(locale=special_child.locale,
-                                                     slug='%s/child' % new_root_slug)
+        child_second_redirect = Document.objects.get(
+            locale=special_child.locale, slug=f'{new_root_slug}/child'
+        )
         ok_(child_second_redirect.is_redirect)
 
         # The documents at the original URLs aren't redirects anymore.
@@ -1719,9 +1698,8 @@ class PageMoveTests(UserTestCase):
             child_doc._move_tree('test-move-error-messaging/moved')
         except PageMoveError as e:
             err_strings = [
-                'with id %s' % grandchild_doc.id,
-                'https://developer.mozilla.org/%s/docs/%s' % (grandchild_doc.locale,
-                                                              grandchild_doc.slug),
+                f'with id {grandchild_doc.id}',
+                f'https://developer.mozilla.org/{grandchild_doc.locale}/docs/{grandchild_doc.slug}',
                 "Exception type: <type 'exceptions.Exception'>",
                 'Exception message: Requested move would overwrite a non-redirect page.',
                 'in _move_tree',

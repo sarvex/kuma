@@ -52,12 +52,10 @@ class BaseDocumentManager(models.Manager):
     def allows_add_by(self, user, slug):
         """Determine whether the user can create a document with the given
         slug. Mainly for enforcing Template: editing permissions"""
-        if (slug.startswith(TEMPLATE_TITLE_PREFIX) and
-                not user.has_perm('wiki.add_template_document')):
-            return False
-        # NOTE: We could enforce wiki.add_document here, but it's implicitly
-        # assumed everyone is allowed.
-        return True
+        return bool(
+            not slug.startswith(TEMPLATE_TITLE_PREFIX)
+            or user.has_perm('wiki.add_template_document')
+        )
 
     def filter_for_list(self, locale=None, category=None, tag=None,
                         tag_name=None, errors=None, noparent=None,

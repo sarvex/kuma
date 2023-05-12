@@ -55,7 +55,7 @@ def get_content_sections(src=''):
     if src:
         attr = '[id]'
         try:
-            elements = pq(src).find(((attr + ',').join(SECTION_TAGS)) + attr)
+            elements = pq(src).find(f'{attr},'.join(SECTION_TAGS) + attr)
 
             def objectify_pyquery_item(i):
                 sections.append({'title': i.text(), 'id': i.attr('id')})
@@ -75,49 +75,42 @@ def get_seo_description(content, locale=None, strip_markup=True):
     seo_summary = ''
     try:
         if content:
-            # Try constraining the search for summary to an explicit "Summary"
-            # section, if any.
-            summary_section = (parse(content).extractSection('Summary')
-                                             .serialize())
-            if summary_section:
+            if summary_section := (
+                parse(content).extractSection('Summary').serialize()
+            ):
                 content = summary_section
 
             # Need to add a BR to the page content otherwise pyQuery wont find
             # a <p></p> element if it's the only element in the doc_html
-            seo_analyze_doc_html = content + '<br />'
+            seo_analyze_doc_html = f'{content}<br />'
             page = pq(seo_analyze_doc_html)
 
             # Look for the SEO summary class first
             summaryClasses = page.find('.seoSummary')
             if len(summaryClasses):
-                if strip_markup:
-                    seo_summary = summaryClasses.text()
-                else:
-                    seo_summary = summaryClasses.html()
+                seo_summary = summaryClasses.text() if strip_markup else summaryClasses.html()
             else:
                 paragraphs = page.find('p')
                 if paragraphs.length:
                     for p in range(len(paragraphs)):
                         item = paragraphs.eq(p)
-                        if strip_markup:
-                            text = item.text()
-                        else:
-                            text = item.html()
+                        text = item.text() if strip_markup else item.html()
                         # Checking for a parent length of 2
                         # because we don't want p's wrapped
                         # in DIVs ("<div class='warning'>") and pyQuery adds
                         # "<html><div>" wrapping to entire document
-                        if (text and len(text) and
-                            not 'Redirect' in text and
-                            text.find(u'«') == -1 and
-                            text.find('&laquo') == -1 and
-                            item.parents().length == 2):
+                        if (
+                            text
+                            and len(text)
+                            and 'Redirect' not in text
+                            and text.find(u'«') == -1
+                            and text.find('&laquo') == -1
+                            and item.parents().length == 2
+                        ):
                             seo_summary = text.strip()
                             break
     except:
         raise
-        pass
-
     if strip_markup:
         # Post-found cleanup
         # remove markup chars
@@ -154,18 +147,17 @@ def extract_code_sample(id, src):
     does that with <pre>'s
     """
     parts = ('html', 'css', 'js')
-    data = dict((x, None) for x in parts)
+    data = {x: None for x in parts}
     if not src:
         return data
     try:
-        section = parse(src).extractSection(id).serialize()
-        if section:
+        if section := parse(src).extractSection(id).serialize():
             # HACK: Ensure the extracted section has a container, in case it
             # consists of a single element.
-            sample = pq('<section>%s</section>' % section)
+            sample = pq(f'<section>{section}</section>')
         else:
             # If no section, fall back to plain old ID lookup
-            sample = pq(src).find('#%s' % id)
+            sample = pq(src).find(f'#{id}')
         for part in parts:
             selector = ','.join(x % (part,) for x in (
                 '.%s',
@@ -206,7 +198,7 @@ def extract_html_attributes(content):
     try:
         attribs = set()
         for token in parse(content).stream:
-            if 'StartTag' == token['type']:
+            if token['type'] == 'StartTag':
                 attribs.update(token['data'])
         return ['%s="%s"' % x for x in attribs]
     except:
@@ -218,10 +210,11 @@ def extract_kumascript_macro_names(content):
     """Extract a unique set of KumaScript macro names used in the content"""
     names = set()
     try:
-        txt = []
-        for token in parse(content).stream:
-            if token['type'] in ('Characters', 'SpaceCharacters'):
-                txt.append(token['data'])
+        txt = [
+            token['data']
+            for token in parse(content).stream
+            if token['type'] in ('Characters', 'SpaceCharacters')
+        ]
         txt = ''.join(txt)
         macro_re = re.compile('\{\{\s*([^\(\} ]+)', re.MULTILINE)
         names.update(macro_re.findall(txt))
@@ -332,7 +325,10 @@ class URLAbsolutionFilter(html5lib_Filter):
 
         for token in input:
 
-            if ('StartTag' == token['type'] and token['name'] in self.tag_attributes):
+            if (
+                token['type'] == 'StartTag'
+                and token['name'] in self.tag_attributes
+            ):
                 attrs = dict(token['data'])
 
                 # If the element has the attribute we're looking for
@@ -348,7 +344,7 @@ class URLAbsolutionFilter(html5lib_Filter):
                             # Starts with "/", so just add the base url
                             attrs[desired_attr] = self.base_url + address
                         else:
-                            attrs[desired_attr] = self.base_url + '/' + address
+                            attrs[desired_attr] = f'{self.base_url}/{address}'
                         token['data'] = attrs.items()
 
             yield token
@@ -372,13 +368,13 @@ class LinkAnnotationFilter(html5lib_Filter):
         input = html5lib_Filter.__iter__(self)
 
         # Pass #1: Gather all the link URLs and prepare annotations
-        links = dict()
+        links = {}
         buffer = []
         for token in input:
             buffer.append(token)
-            if ('StartTag' == token['type'] and 'a' == token['name']):
+            if token['type'] == 'StartTag' and token['name'] == 'a':
                 attrs = dict(token['data'])
-                if not 'href' in attrs:
+                if 'href' not in attrs:
                     continue
 
                 href = attrs['href']
@@ -395,16 +391,11 @@ class LinkAnnotationFilter(html5lib_Filter):
         needs_existence_check = defaultdict(lambda: defaultdict(set))
 
         # Run through all the links and check for annotatable conditions.
-        for href in links.keys():
+        for href, value in links.items():
 
-            # Is this an external URL?
-            is_external = False
-            for prefix in self.EXTERNAL_PREFIXES:
-                if href.startswith(prefix):
-                    is_external = True
-                    break
+            is_external = any(href.startswith(prefix) for prefix in self.EXTERNAL_PREFIXES)
             if is_external:
-                links[href]['classes'].append('external')
+                value['classes'].append('external')
                 continue
 
             # TODO: Should this also check for old-school mindtouch URLs? Or
@@ -414,11 +405,7 @@ class LinkAnnotationFilter(html5lib_Filter):
             # Is this a kuma doc URL?
             if '/docs/' in href:
 
-                # Check if this is a special docs path that's exempt from "new"
-                skip = False
-                for path in DOC_SPECIAL_PATHS:
-                    if '/docs/%s' % path in href:
-                        skip = True
+                skip = any(f'/docs/{path}' in href for path in DOC_SPECIAL_PATHS)
                 if skip:
                     continue
 
@@ -467,7 +454,7 @@ class LinkAnnotationFilter(html5lib_Filter):
 
         # Pass #2: Filter the content, annotating links
         for token in buffer:
-            if ('StartTag' == token['type'] and 'a' == token['name']):
+            if token['type'] == 'StartTag' and token['name'] == 'a':
                 attrs = dict(token['data'])
 
                 if 'href' in attrs:
@@ -480,10 +467,7 @@ class LinkAnnotationFilter(html5lib_Filter):
 
                     if href in links:
                         # Update class names on this link element.
-                        if 'class' in attrs:
-                            classes = set(attrs['class'].split(u' '))
-                        else:
-                            classes = set()
+                        classes = set(attrs['class'].split(u' ')) if 'class' in attrs else set()
                         classes.update(links[href]['classes'])
                         if classes:
                             attrs['class'] = u' '.join(classes)
@@ -505,7 +489,7 @@ class SectionIDFilter(html5lib_Filter):
         """Generate a unique ID"""
         while True:
             self.id_cnt += 1
-            id = 'sect%s' % self.id_cnt
+            id = f'sect{self.id_cnt}'
             if id not in self.known_ids:
                 self.known_ids.add(id)
                 return id
@@ -519,14 +503,12 @@ class SectionIDFilter(html5lib_Filter):
 
     def slugify(self, text):
         """Turn the text content of a header into a slug for use in an ID"""
-        non_safe = [c for c in text if c in self.non_url_safe]
-        if non_safe:
+        if non_safe := [c for c in text if c in self.non_url_safe]:
             for c in non_safe:
                 text = text.replace(c, hex(ord(c)).replace('0x', '.').upper())
         # Strip leading, trailing and multiple whitespace, convert remaining whitespace to _
         text = u'_'.join(text.split())
-        non_ascii = [c for c in text if ord(c) > 128]
-        if non_ascii:
+        if non_ascii := [c for c in text if ord(c) > 128]:
             for c in non_ascii:
                 text = text.replace(c, self.encode_non_ascii(c))
         return text
@@ -553,7 +535,7 @@ class SectionIDFilter(html5lib_Filter):
         buffer = []
         for token in input:
             buffer.append(token)
-            if 'StartTag' == token['type']:
+            if token['type'] == 'StartTag':
                 attrs = dict(token['data'])
                 # The header tags IDs will be (re)evaluated in pass 2
                 if 'id' in attrs and token['name'] not in HEAD_TAGS:
@@ -565,15 +547,12 @@ class SectionIDFilter(html5lib_Filter):
         while len(buffer):
             token = buffer.pop(0)
 
-            if not ('StartTag' == token['type'] and
-                    token['name'] in SECTION_TAGS):
+            if token['type'] != 'StartTag' or token['name'] not in SECTION_TAGS:
                 yield token
             else:
                 attrs = dict(token['data'])
 
-                # Treat a name attribute as a human-specified ID override
-                name = attrs.get('name', None)
-                if name:
+                if name := attrs.get('name', None):
                     attrs['id'] = name
                     token['data'] = attrs.items()
                     yield token
@@ -596,8 +575,10 @@ class SectionIDFilter(html5lib_Filter):
                     tmp.append(token)
                     if token['type'] in ('Characters', 'SpaceCharacters'):
                         text.append(token['data'])
-                    elif ('EndTag' == token['type'] and
-                          start['name'] == token['name']):
+                    elif (
+                        token['type'] == 'EndTag'
+                        and start['name'] == token['name']
+                    ):
                         # Note: This is naive, and doesn't track other
                         # start/end tags nested in the header. Odd things might
                         # happen in a case like <h1><h1></h1></h1>. But, that's
@@ -624,8 +605,7 @@ class SectionIDFilter(html5lib_Filter):
 
                 # Finally, emit the tokens we scooped up for the header.
                 yield start
-                for t in tmp:
-                    yield t
+                yield from tmp
 
 
 class SectionEditLinkFilter(html5lib_Filter):
@@ -643,37 +623,50 @@ class SectionEditLinkFilter(html5lib_Filter):
 
             yield token
 
-            if ('StartTag' == token['type'] and
-                    token['name'] in SECTION_TAGS):
+            if token['type'] == 'StartTag' and token['name'] in SECTION_TAGS:
                 attrs = dict(token['data'])
-                id = attrs.get('id', None)
-                if id:
-                    out = (
-                        {'type': 'StartTag', 'name': 'a',
-                         'data': {
-                             'title': _('Edit section'),
-                             'class': 'edit-section',
-                             'data-section-id': id,
-                             'data-section-src-url': u'%s?%s' % (
-                                 reverse('wiki.document',
-                                         args=[self.full_path],
-                                         locale=self.locale),
-                                 urlencode({'section': id.encode('utf-8'),
-                                            'raw': 'true'})
-                              ),
-                              'href': u'%s?%s' % (
-                                 reverse('wiki.edit_document',
-                                         args=[self.full_path],
-                                         locale=self.locale),
-                                 urlencode({'section': id.encode('utf-8'),
-                                            'edit_links': 'true'})
-                              )
-                         }},
+                if id := attrs.get('id', None):
+                    yield from (
+                        {
+                            'type': 'StartTag',
+                            'name': 'a',
+                            'data': {
+                                'title': _('Edit section'),
+                                'class': 'edit-section',
+                                'data-section-id': id,
+                                'data-section-src-url': u'%s?%s'
+                                % (
+                                    reverse(
+                                        'wiki.document',
+                                        args=[self.full_path],
+                                        locale=self.locale,
+                                    ),
+                                    urlencode(
+                                        {
+                                            'section': id.encode('utf-8'),
+                                            'raw': 'true',
+                                        }
+                                    ),
+                                ),
+                                'href': u'%s?%s'
+                                % (
+                                    reverse(
+                                        'wiki.edit_document',
+                                        args=[self.full_path],
+                                        locale=self.locale,
+                                    ),
+                                    urlencode(
+                                        {
+                                            'section': id.encode('utf-8'),
+                                            'edit_links': 'true',
+                                        }
+                                    ),
+                                ),
+                            },
+                        },
                         {'type': 'Characters', 'data': _('Edit')},
-                        {'type': 'EndTag', 'name': 'a'}
+                        {'type': 'EndTag', 'name': 'a'},
                     )
-                    for t in out:
-                        yield t
 
 
 class SectionTOCFilter(html5lib_Filter):
@@ -692,10 +685,9 @@ class SectionTOCFilter(html5lib_Filter):
         self.skip_header = False
 
         for token in input:
-            if ('StartTag' == token['type'] and
-                    token['name'] in HEAD_TAGS_TOC):
+            if token['type'] == 'StartTag' and token['name'] in HEAD_TAGS_TOC:
                 level_match = re.compile(r'^h(\d)$').match(token['name'])
-                level = int(level_match.group(1))
+                level = int(level_match[1])
                 if level > self.max_level:
                     self.skip_header = True
                     continue
@@ -716,56 +708,53 @@ class SectionTOCFilter(html5lib_Filter):
                     self.level = level
                 elif level < self.level:
                     diff = self.level - level
-                    for i in range(diff):
+                    for _ in range(diff):
                         out += ({'type': 'EndTag', 'name': 'ol'},
                                 {'type': 'EndTag', 'name': 'li'})
                         self.open_level -= 1
                     self.level = level
                 attrs = dict(token['data'])
-                id = attrs.get('id', None)
-                if id:
+                if id := attrs.get('id', None):
                     out += (
                         {'type': 'StartTag', 'name': 'li', 'data': {}},
-                        {'type': 'StartTag', 'name': 'a',
-                         'data': {
-                            'rel': 'internal',
-                            'href': '#%s' % id,
-                         }},
+                        {
+                            'type': 'StartTag',
+                            'name': 'a',
+                            'data': {'rel': 'internal', 'href': f'#{id}'},
+                        },
                     )
                     self.in_hierarchy = True
-                    for t in out:
-                        yield t
-            elif ('StartTag' == token['type'] and
-                  token['name'] in TAGS_IN_TOC and
-                  self.in_header and
-                  not self.skip_header):
+                    yield from out
+            elif (
+                token['type'] == 'StartTag'
+                and token['name'] in TAGS_IN_TOC
+                and self.in_header
+                and not self.skip_header
+            ):
                 yield token
             elif (token['type'] in ("Characters", "SpaceCharacters")
                   and self.in_header):
                 yield token
-            elif ('EndTag' == token['type'] and
-                  token['name'] in TAGS_IN_TOC and
-                  self.in_header):
+            elif (
+                token['type'] == 'EndTag'
+                and token['name'] in TAGS_IN_TOC
+                and self.in_header
+            ):
                 yield token
-            elif ('EndTag' == token['type'] and
-                    token['name'] in HEAD_TAGS_TOC):
+            elif token['type'] == 'EndTag' and token['name'] in HEAD_TAGS_TOC:
                 level_match = re.compile(r'^h(\d)$').match(token['name'])
-                level = int(level_match.group(1))
+                level = int(level_match[1])
                 if level > self.max_level:
                     self.skip_header = False
                     continue
                 self.in_header = False
-                out = ({'type': 'EndTag', 'name': 'a'},)
-                for t in out:
-                    yield t
-
+                yield from ({'type': 'EndTag', 'name': 'a'},)
         if self.open_level > 0:
             out = ()
-            for i in range(self.open_level):
+            for _ in range(self.open_level):
                 out += ({'type': 'EndTag', 'name': 'ol'},
                         {'type': 'EndTag', 'name': 'li'})
-            for t in out:
-                yield t
+            yield from out
 
 
 class H2TOCFilter(SectionTOCFilter):
@@ -824,7 +813,7 @@ class SectionFilter(html5lib_Filter):
                 self.next_in_section = False
                 self.in_section = True
 
-            if 'StartTag' == token['type']:
+            if token['type'] == 'StartTag':
                 attrs = dict(token['data'])
                 self.open_level += 1
 
@@ -871,7 +860,7 @@ class SectionFilter(html5lib_Filter):
 
                     self.heading_to_ignore = token
 
-            if 'EndTag' == token['type']:
+            if token['type'] == 'EndTag':
                 self.open_level -= 1
 
                 # If the parent of the section has ended, end the section.
@@ -883,32 +872,27 @@ class SectionFilter(html5lib_Filter):
             # If there's no replacement source, then this is a section
             # extraction. So, emit tokens while we're in the section, as long
             # as we're also not in the process of ignoring a heading
-            if not self.replace_source:
-                if self.in_section and not self.heading_to_ignore:
-                    yield token
-
-            # If there is a replacement source, then this is a section
-            # replacement. Emit tokens of the source stream until we're in the
-            # section, then emit the replacement stream and ignore the rest of
-            # the source stream for the section. Note that an ignored heading
-            # is *not* replaced.
-            else:
+            if self.replace_source:
                 if not self.in_section or self.heading_to_ignore:
                     yield token
                 elif not self.replacement_emitted:
-                    for r_token in self.replace_source:
-                        yield r_token
+                    yield from self.replace_source
                     self.replacement_emitted = True
+
+            elif self.in_section and not self.heading_to_ignore:
+                yield token
 
             # If this looks like the end of a heading we were ignoring, clear
             # the ignoring condition.
-            if ('EndTag' == token['type'] and
-                    self.in_section and
-                    self.ignore_heading and
-                    not self.already_ignored_header and
-                    self.heading_to_ignore and
-                    self._isHeading(token) and
-                    token['name'] == self.heading_to_ignore['name']):
+            if (
+                token['type'] == 'EndTag'
+                and self.in_section
+                and self.ignore_heading
+                and not self.already_ignored_header
+                and self.heading_to_ignore
+                and self._isHeading(token)
+                and token['name'] == self.heading_to_ignore['name']
+            ):
 
                 self.heading_to_ignore = None
                 self.already_ignored_header = True
@@ -925,32 +909,22 @@ class SectionFilter(html5lib_Filter):
         """Calculate the heading rank of this token"""
         if not self._isHeading(token):
             return None
-        if 'hgroup' != token['name']:
-            return int(token['name'][1])
-        else:
-            # FIXME: hgroup rank == highest rank of headers contained
-            # But, we'd need to track the hgroup and then any child headers
-            # encountered in the stream. Not doing that right now.
-            # For now, just assume an hgroup is equivalent to h1
-            return 1
+        return int(token['name'][1]) if token['name'] != 'hgroup' else 1
 
 
 class CodeSyntaxFilter(html5lib_Filter):
     """Filter which ensures section-related elements have unique IDs"""
     def __iter__(self):
         for token in html5lib_Filter.__iter__(self):
-            if ('StartTag' == token['type']):
-                if 'pre' == token['name']:
-                    attrs = dict(token['data'])
-                    function = attrs.get('function', None)
-                    if function:
-                        m = MT_SYNTAX_PAT.match(function)
-                        if m:
-                            lang = m.group(1).lower()
-                            brush = MT_SYNTAX_BRUSH_MAP.get(lang, lang)
-                            attrs['class'] = "brush: %s" % brush
-                            del attrs['function']
-                            token['data'] = attrs.items()
+            if token['type'] == 'StartTag' and token['name'] == 'pre':
+                attrs = dict(token['data'])
+                if function := attrs.get('function', None):
+                    if m := MT_SYNTAX_PAT.match(function):
+                        lang = m.group(1).lower()
+                        brush = MT_SYNTAX_BRUSH_MAP.get(lang, lang)
+                        attrs['class'] = f"brush: {brush}"
+                        del attrs['function']
+                        token['data'] = attrs.items()
             yield token
 
 
@@ -961,7 +935,7 @@ class EditorSafetyFilter(html5lib_Filter):
 
         for token in html5lib_Filter.__iter__(self):
 
-            if ('StartTag' == token['type']):
+            if token['type'] == 'StartTag':
 
                 # Strip out any attributes that start with "on"
                 token['data'] = [(k, v)
@@ -984,19 +958,16 @@ class IframeHostFilter(html5lib_Filter):
     def __iter__(self):
         in_iframe = False
         for token in html5lib_Filter.__iter__(self):
-            if ('StartTag' == token['type']):
-                if 'iframe' == token['name']:
-                    in_iframe = True
-                    attrs = dict(token['data'])
-                    src = attrs.get('src', '')
-                    if src:
-                        if not re.search(self.hosts, src):
-                            attrs['src'] = ''
-                    token['data'] = attrs.items()
-                    yield token
-            if ('EndTag' == token['type']):
-                if 'iframe' == token['name']:
-                    in_iframe = False
+            if token['type'] == 'StartTag' and token['name'] == 'iframe':
+                in_iframe = True
+                attrs = dict(token['data'])
+                if src := attrs.get('src', ''):
+                    if not re.search(self.hosts, src):
+                        attrs['src'] = ''
+                token['data'] = attrs.items()
+                yield token
+            if token['type'] == 'EndTag' and token['name'] == 'iframe':
+                in_iframe = False
             if not in_iframe:
                 yield token
 
@@ -1005,15 +976,11 @@ class DekiscriptMacroFilter(html5lib_Filter):
     """Filter to convert Dekiscript template calls into kumascript macros."""
     def __iter__(self):
 
-        buffer = []
-        for token in html5lib_Filter.__iter__(self):
-            buffer.append(token)
-
+        buffer = list(html5lib_Filter.__iter__(self))
         while len(buffer):
             token = buffer.pop(0)
 
-            if not ('StartTag' == token['type'] and
-                    'span' == token['name']):
+            if token['type'] != 'StartTag' or token['name'] != 'span':
                 yield token
                 continue
 
@@ -1027,20 +994,16 @@ class DekiscriptMacroFilter(html5lib_Filter):
                 token = buffer.pop(0)
                 if token['type'] in ('Characters', 'SpaceCharacters'):
                     ds_call.append(token['data'])
-                elif 'StartTag' == token['type']:
-                    attrs = token['data']
-                    if attrs:
-                        a_out = (u' %s' % u' '.join(
-                            (u'%s=%s' %
-                             (name, quoteattr(val))
-                             for name, val in attrs)))
+                elif token['type'] == 'StartTag':
+                    if attrs := token['data']:
+                        a_out = f" {' '.join(f'{name}={quoteattr(val)}' for name, val in attrs)}"
                     else:
                         a_out = u''
-                    ds_call.append(u'<%s%s>' % (token['name'], a_out))
-                elif 'EndTag' == token['type']:
-                    if 'span' == token['name']:
+                    ds_call.append(f"<{token['name']}{a_out}>")
+                elif token['type'] == 'EndTag':
+                    if token['name'] == 'span':
                         break
-                    ds_call.append('</%s>' % token['name'])
+                    ds_call.append(f"</{token['name']}>")
 
             ds_call = u''.join(ds_call).strip()
 
@@ -1053,15 +1016,13 @@ class DekiscriptMacroFilter(html5lib_Filter):
             # template("template name", [ "params" ])
             wt_re = re.compile(
                 r'''^template\(['"]([^'"]+)['"],\s*\[([^\]]+)]''', re.I)
-            m = wt_re.match(ds_call)
-            if m:
-                ds_call = '%s(%s)' % (m.group(1), m.group(2).strip())
+            if m := wt_re.match(ds_call):
+                ds_call = f'{m[1]}({m[2].strip()})'
 
             # template("template name")
             wt_re = re.compile(r'''^template\(['"]([^'"]+)['"]''', re.I)
-            m = wt_re.match(ds_call)
-            if m:
-                ds_call = '%s()' % (m.group(1))
+            if m := wt_re.match(ds_call):
+                ds_call = f'{m[1]}()'
 
             # HACK: This is dirty, but seems like the easiest way to
             # reconstitute the token stream, including what gets parsed as
@@ -1069,5 +1030,4 @@ class DekiscriptMacroFilter(html5lib_Filter):
             #
             # eg. {{ Note("This is <strong>strongly</strong> discouraged") }}
             parsed = parse('{{ %s }}' % ds_call)
-            for token in parsed.stream:
-                yield token
+            yield from parsed.stream

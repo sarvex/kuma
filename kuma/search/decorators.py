@@ -32,7 +32,7 @@ def requires_good_connection(fun):
 
 def register_live_index(model_cls):
     """Register a model and index for auto indexing."""
-    uid = str(model_cls) + 'live_indexing'
+    uid = f'{str(model_cls)}live_indexing'
     render_done.connect(render_done_handler, model_cls, dispatch_uid=uid)
     pre_delete.connect(pre_delete_handler, model_cls, dispatch_uid=uid)
     # Enable this to be used as decorator.

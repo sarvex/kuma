@@ -31,8 +31,9 @@ def clean_sessions():
     if memcache.add(LOCK_ID, now.strftime('%c'), LOCK_EXPIRE):
         total_count = get_expired_sessions(now).count()
         delete_count = 0
-        logger.info('Deleting the %s of %s oldest expired sessions' %
-                    (chunk_size, total_count))
+        logger.info(
+            f'Deleting the {chunk_size} of {total_count} oldest expired sessions'
+        )
         try:
             cursor = connection.cursor()
             delete_count = cursor.execute("""
@@ -44,14 +45,15 @@ def clean_sessions():
                 """, [chunk_size])
             transaction.commit_unless_managed()
         finally:
-            logger.info('Deleted %s expired sessions' % delete_count)
+            logger.info(f'Deleted {delete_count} expired sessions')
             memcache.delete(LOCK_ID)
             expired_sessions = get_expired_sessions(now)
             if expired_sessions.exists():
                 clean_sessions.apply_async()
     else:
-        logger.error('The clean_sessions task is already running since %s' %
-                     memcache.get(LOCK_ID))
+        logger.error(
+            f'The clean_sessions task is already running since {memcache.get(LOCK_ID)}'
+        )
 
 
 @task

@@ -30,11 +30,10 @@ class ActionCounterUniqueManager(models.Manager):
                                   name=action_name, ip=ip,
                                   user_agent=user_agent, user=user,
                                   total=0))
-        else:
-            try:
-                return (self.get(unique_hash=unique_hash), False)
-            except ActionCounterUnique.DoesNotExist:
-                return (None, False)
+        try:
+            return (self.get(unique_hash=unique_hash), False)
+        except ActionCounterUnique.DoesNotExist:
+            return (None, False)
 
 
 class ActionCounterUnique(models.Model):

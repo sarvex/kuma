@@ -72,9 +72,13 @@ if settings.DEBUG:
 
 if settings.SERVE_MEDIA:
     media_url = settings.MEDIA_URL.lstrip('/').rstrip('/')
-    urlpatterns += patterns('',
-        (r'^%s/(?P<path>.*)$' % media_url, 'django.views.static.serve',
-          {'document_root': settings.MEDIA_ROOT}),
+    urlpatterns += patterns(
+        '',
+        (
+            f'^{media_url}/(?P<path>.*)$',
+            'django.views.static.serve',
+            {'document_root': settings.MEDIA_ROOT},
+        ),
     )
 
 # Legacy MindTouch redirects. These go last so that they don't mess

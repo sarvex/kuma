@@ -77,10 +77,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
         # Work out a current locale, from some source.
         zone_locale = locale
         if not zone_locale:
-            if prefixer:
-                zone_locale = prefixer.locale
-            else:
-                zone_locale = settings.WIKI_DEFAULT_LANGUAGE
+            zone_locale = prefixer.locale if prefixer else settings.WIKI_DEFAULT_LANGUAGE
         # Get DocumentZone remaps for the current locale.
         remaps = DocumentZoneURLRemapsJob().get(zone_locale)
         for original_path, new_path in remaps:
@@ -88,10 +85,7 @@ def reverse(viewname, urlconf=None, args=None, kwargs=None, prefix=None,
                 url = url.replace(original_path, new_path, 1)
                 break
 
-    if prefixer:
-        return prefixer.fix(url)
-    else:
-        return url
+    return prefixer.fix(url) if prefixer else url
 
 
 def find_supported(ranked):
@@ -101,9 +95,7 @@ def find_supported(ranked):
         lang = lang.lower()
         if lang in langs:
             return langs[lang]
-        # Add derived language tags to the end of the list as a fallback.
-        pre = '-'.join(lang.split('-')[0:-1])
-        if pre:
+        if pre := '-'.join(lang.split('-')[:-1]):
             ranked.append((pre, None))
     # Couldn't find any acceptable locale.
     return False
@@ -120,13 +112,7 @@ def split_path(path):
     # Use partition instead of split since it always returns 3 parts
     first, _, rest = path.partition('/')
 
-    # Treat locale as a single-item ranked list.
-    lang = find_supported([(first, 1.0)])
-
-    if lang:
-        return lang, rest
-    else:
-        return '', path
+    return (lang, rest) if (lang := find_supported([(first, 1.0)])) else ('', path)
 
 
 class Prefixer(object):
@@ -149,9 +135,9 @@ class Prefixer(object):
                 return settings.LANGUAGE_URL_MAP[lang]
 
         if self.request.META.get('HTTP_ACCEPT_LANGUAGE'):
-            best = get_best_language(
-                self.request.META['HTTP_ACCEPT_LANGUAGE'])
-            if best:
+            if best := get_best_language(
+                self.request.META['HTTP_ACCEPT_LANGUAGE']
+            ):
                 return best
 
         return settings.LANGUAGE_CODE
@@ -159,10 +145,7 @@ class Prefixer(object):
     def fix(self, path):
         path = path.lstrip('/')
         url_parts = [self.request.META['SCRIPT_NAME']]
-        if path.endswith('/'):
-            check_path = path
-        else:
-            check_path = path + '/'
+        check_path = path if path.endswith('/') else f'{path}/'
         if not check_path.startswith(settings.LANGUAGE_URL_IGNORED_PATHS):
             locale = self.locale if self.locale else self.get_language()
             url_parts.append(locale)

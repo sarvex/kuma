@@ -122,8 +122,7 @@ def valid_slug_parent(slug, locale):
         try:
             parent = Document.objects.get(locale=locale, slug=parent_slug)
         except Document.DoesNotExist:
-            raise Exception(_("Parent %s/%s does not exist." % (locale,
-                                                         parent_slug)))
+            raise Exception(_(f"Parent {locale}/{parent_slug} does not exist."))
 
     return parent
 
@@ -286,7 +285,7 @@ class Document(NotificationsMixin, models.Model):
     admin_objects = DocumentAdminManager()
 
     def __unicode__(self):
-        return u'%s (%s)' % (self.get_absolute_url(), self.title)
+        return f'{self.get_absolute_url()} ({self.title})'
 
     @cache_with_field('body_html')
     def get_body_html(self, *args, **kwargs):
@@ -344,12 +343,10 @@ class Document(NotificationsMixin, models.Model):
         Search from self up through DocumentZone stack, returning the first
         zone nav HTML found.
         """
-        src = self.get_zone_subnav_local_html()
-        if src:
+        if src := self.get_zone_subnav_local_html():
             return src
         for zone in DocumentZoneStackJob().get(self.pk):
-            src = zone.document.get_zone_subnav_local_html()
-            if src:
+            if src := zone.document.get_zone_subnav_local_html():
                 return src
 
     def extract_section(self, content, section_id, ignore_heading=False):
@@ -362,10 +359,7 @@ class Document(NotificationsMixin, models.Model):
         """
         Convenience method to extract the rendered content for a single section
         """
-        if self.rendered_html:
-            content = self.rendered_html
-        else:
-            content = self.html
+        content = self.rendered_html if self.rendered_html else self.html
         return self.extract_section(content, section_id, ignore_heading)
 
     def calculate_etag(self, section_id=None):
@@ -374,7 +368,7 @@ class Document(NotificationsMixin, models.Model):
             content = self.html
         else:
             content = self.extract_section(self.html, section_id)
-        return '"%s"' % hashlib.sha1(content.encode('utf8')).hexdigest()
+        return f""""{hashlib.sha1(content.encode('utf8')).hexdigest()}\""""
 
     def current_or_latest_revision(self):
         """Returns current revision if there is one, else the last created
@@ -550,10 +544,7 @@ class Document(NotificationsMixin, models.Model):
     def get_summary(self, strip_markup=True, use_rendered=True):
         """Attempt to get the document summary from rendered content, with
         fallback to raw HTML"""
-        if use_rendered and self.rendered_html:
-            src = self.rendered_html
-        else:
-            src = self.html
+        src = self.rendered_html if use_rendered and self.rendered_html else self.html
         return get_seo_description(src, self.locale, strip_markup)
 
     def build_json_data(self):
@@ -570,22 +561,29 @@ class Document(NotificationsMixin, models.Model):
 
         translations = []
         if self.pk:
-            for translation in self.other_translations:
-                translations.append({
+            translations.extend(
+                {
                     'last_edit': translation.current_revision.created.isoformat(),
                     'locale': translation.locale,
-                    'localization_tags': [tag.name for tag in
-                          translation.current_revision.localization_tags.all()],
-                    'review_tags': [tag.name for tag in
-                          translation.current_revision.review_tags.all()],
+                    'localization_tags': [
+                        tag.name
+                        for tag in translation.current_revision.localization_tags.all()
+                    ],
+                    'review_tags': [
+                        tag.name
+                        for tag in translation.current_revision.review_tags.all()
+                    ],
                     'summary': translation.current_revision.summary,
                     'tags': [tag.name for tag in translation.tags.all()],
                     'title': translation.title,
-                    'url': reverse('wiki.document',
-                                   args=[translation.full_path],
-                                   locale=translation.locale)
-                })
-
+                    'url': reverse(
+                        'wiki.document',
+                        args=[translation.full_path],
+                        locale=translation.locale,
+                    ),
+                }
+                for translation in self.other_translations
+            )
         if not self.current_revision:
             review_tags = []
             localization_tags = []
@@ -594,11 +592,7 @@ class Document(NotificationsMixin, models.Model):
                            self.current_revision.review_tags.all()]
             localization_tags = [tag.name for tag in
                            self.current_revision.localization_tags.all()]
-        if not self.pk:
-            tags = []
-        else:
-            tags = [tag.name for tag in self.tags.all()]
-
+        tags = [] if not self.pk else [tag.name for tag in self.tags.all()]
         if self.modified:
             modified = self.modified.isoformat()
         else:
@@ -699,7 +693,7 @@ class Document(NotificationsMixin, models.Model):
 
     def _raise_if_collides(self, attr, exception):
         """Raise an exception if a page of this title/slug already exists."""
-        if self.id is None or hasattr(self, 'old_' + attr):
+        if self.id is None or hasattr(self, f'old_{attr}'):
             # If I am new or my title/slug changed...
             existing = self._existing(attr, getattr(self, attr))
             if existing.exists():
@@ -728,8 +722,9 @@ class Document(NotificationsMixin, models.Model):
         # Can't save this translation if parent not localizable
         if (self.parent and self.parent.id != self.id and
                 not self.parent.is_localizable):
-            raise ValidationError('"%s": parent "%s" is not localizable.' % (
-                                  unicode(self), unicode(self.parent)))
+            raise ValidationError(
+                f'"{unicode(self)}": parent "{unicode(self.parent)}" is not localizable.'
+            )
 
         # Can't make not localizable if it has translations
         # This only applies to documents that already exist, hence self.pk
@@ -740,15 +735,14 @@ class Document(NotificationsMixin, models.Model):
 
     def _clean_category(self):
         """Make sure a doc's category is the same as its parent's."""
-        parent = self.parent
-        if parent:
+        if parent := self.parent:
             self.category = parent.category
         elif self.category not in (id for id, name in self.CATEGORIES):
             # All we really need to do here is make sure category != '' (which
             # is what it is when it's missing from the DocumentForm). The extra
             # validation is just a nicety.
             raise ValidationError(_('Please choose a category.'))
-        else:  # An article cannot have both a parent and children.
+        else:
             # Make my children the same as me:
             if self.id:
                 self.translations.all().update(category=self.category)
@@ -775,23 +769,19 @@ class Document(NotificationsMixin, models.Model):
                     return new_value
                 i += 1
 
-        old_attr = 'old_' + attr
-        if hasattr(self, old_attr):
-            # My slug (or title) is changing; we can reuse it for the redirect.
-            return getattr(self, old_attr)
-        else:
-            # Come up with a unique slug (or title):
-            return unique_attr()
+        old_attr = f'old_{attr}'
+        return getattr(self, old_attr) if hasattr(self, old_attr) else unique_attr()
 
     def revert(self, revision, user, comment=None):
         old_review_tags = [t.name for t in revision.review_tags.all()]
         if revision.document.original == self:
             revision.based_on = revision
         revision.id = None
-        revision.comment = ("Revert to revision of %s by %s" %
-                            (revision.created, revision.creator))
+        revision.comment = (
+            f"Revert to revision of {revision.created} by {revision.creator}"
+        )
         if comment:
-            revision.comment += ': "%s"' % comment
+            revision.comment += f': "{comment}"'
         revision.created = datetime.now()
         revision.creator = user
         revision.save()
@@ -825,8 +815,7 @@ class Document(NotificationsMixin, models.Model):
         new_rev.tags = (new_tags and new_tags or
                         edit_string_for_tags(self.tags.all()))
 
-        new_review_tags = data.get('review_tags', False)
-        if new_review_tags:
+        if new_review_tags := data.get('review_tags', False):
             review_tags = new_review_tags
         elif curr_rev:
             review_tags = edit_string_for_tags(curr_rev.review_tags.all())
@@ -835,9 +824,7 @@ class Document(NotificationsMixin, models.Model):
 
         new_rev.summary = data.get('summary', '')
 
-        # Accept HTML edits, optionally by section
-        new_html = data.get('content', data.get('html', False))
-        if new_html:
+        if new_html := data.get('content', data.get('html', False)):
             if not section_id:
                 new_rev.content = new_html
             else:
@@ -899,31 +886,28 @@ class Document(NotificationsMixin, models.Model):
     def delete(self, *args, **kwargs):
         if waffle.switch_is_active('wiki_error_on_delete'):
             # bug 863692: Temporary while we investigate disappearing pages.
-            raise Exception("Attempt to delete document %s: %s" %
-                            (self.id, self.title))
-        else:
-            if self.is_redirect or 'purge' in kwargs:
-                if 'purge' in kwargs:
-                    kwargs.pop('purge')
-                return super(Document, self).delete(*args, **kwargs)
-            signals.pre_delete.send(sender=self.__class__,
-                                    instance=self)
-            if not self.deleted:
-                Document.objects.filter(pk=self.pk).update(deleted=True)
-                memcache.delete(self.last_modified_cache_key)
+            raise Exception(f"Attempt to delete document {self.id}: {self.title}")
+        if self.is_redirect or 'purge' in kwargs:
+            if 'purge' in kwargs:
+                kwargs.pop('purge')
+            return super(Document, self).delete(*args, **kwargs)
+        signals.pre_delete.send(sender=self.__class__,
+                                instance=self)
+        if not self.deleted:
+            Document.objects.filter(pk=self.pk).update(deleted=True)
+            memcache.delete(self.last_modified_cache_key)
 
-            signals.post_delete.send(sender=self.__class__, instance=self)
+        signals.post_delete.send(sender=self.__class__, instance=self)
 
     def purge(self):
         if waffle.switch_is_active('wiki_error_on_delete'):
             # bug 863692: Temporary while we investigate disappearing pages.
-            raise Exception("Attempt to purge document %s: %s" %
-                            (self.id, self.title))
-        else:
-            if not self.deleted:
-                raise Exception("Attempt tp purge non-deleted document %s: %s" %
-                                (self.id, self.title))
-            self.delete(purge=True)
+            raise Exception(f"Attempt to purge document {self.id}: {self.title}")
+        if not self.deleted:
+            raise Exception(
+                f"Attempt tp purge non-deleted document {self.id}: {self.title}"
+            )
+        self.delete(purge=True)
 
     def undelete(self):
         if not self.deleted:
@@ -1189,10 +1173,7 @@ Full traceback:
                     # HACK: Let's auto-add tags that flag this as a topic stub
                     stub_tags = '"TopicStub","NeedsTranslation"'
                     stub_l10n_tags = ['inprogress']
-                    if new_rev.tags:
-                        new_rev.tags = '%s,%s' % (new_rev.tags, stub_tags)
-                    else:
-                        new_rev.tags = stub_tags
+                    new_rev.tags = f'{new_rev.tags},{stub_tags}' if new_rev.tags else stub_tags
                     new_rev.save()
                     new_rev.localization_tags.add(*stub_l10n_tags)
 
@@ -1202,10 +1183,7 @@ Full traceback:
 
     @property
     def content_parsed(self):
-        if not self.current_revision:
-            return None
-
-        return self.current_revision.content_parsed
+        return self.current_revision.content_parsed if self.current_revision else None
 
     def files_dict(self):
         intermediates = DocumentAttachment.objects.filter(document__pk=self.id)
@@ -1289,7 +1267,7 @@ Full traceback:
         locale, path = split_path(path)
         if required_locale and locale != required_locale:
             return None
-        path = '/' + path
+        path = f'/{path}'
 
         try:
             view, view_args, view_kwargs = resolve(path)
@@ -1321,8 +1299,7 @@ Full traceback:
         # with hrefs, return the href of the first one. This trick saves us
         # from having to parse the HTML every time.
         if REDIRECT_HTML in self.html:
-            anchors = PyQuery(self.html)('a[href].redirect')
-            if anchors:
+            if anchors := PyQuery(self.html)('a[href].redirect'):
                 url = anchors[0].get('href')
                 # allow explicit domain and *not* '//'
                 # i.e allow "https://developer...." and "/en-US/docs/blah"
@@ -1342,8 +1319,7 @@ Full traceback:
         Otherwise, return None.
 
         """
-        url = self.redirect_url()
-        if url:
+        if url := self.redirect_url():
             return self.from_url(url)
 
     def filter_permissions(self, user, permissions):
@@ -1369,10 +1345,10 @@ Full traceback:
         docs may have different permissions.
 
         """
-        if (self.slug.startswith(TEMPLATE_TITLE_PREFIX) and
-                not user.has_perm('wiki.change_template_document')):
-            return False
-        return True
+        return bool(
+            not self.slug.startswith(TEMPLATE_TITLE_PREFIX)
+            or user.has_perm('wiki.change_template_document')
+        )
 
     def allows_editing_by(self, user):
         """Return whether `user` is allowed to edit document-level metadata.
@@ -1413,11 +1389,10 @@ Full traceback:
         """Return a list of Documents - other translations of this Document"""
         if self.parent is None:
             return self.translations.all().order_by('locale')
-        else:
-            translations = (self.parent.translations.all()
-                                .exclude(id=self.id).order_by('locale'))
-            pks = list(translations.values_list('pk', flat=True))
-            return Document.objects.filter(pk__in=[self.parent.pk] + pks)
+        translations = (self.parent.translations.all()
+                            .exclude(id=self.id).order_by('locale'))
+        pks = list(translations.values_list('pk', flat=True))
+        return Document.objects.filter(pk__in=[self.parent.pk] + pks)
 
     @property
     def parents(self):
@@ -1493,7 +1468,7 @@ Full traceback:
 
 @receiver(render_done)
 def purge_wiki_url_cache(sender, instance, **kwargs):
-    memcache.delete(u'wiki_url:%s:%s' % (instance.locale, instance.slug))
+    memcache.delete(f'wiki_url:{instance.locale}:{instance.slug}')
 
 
 class DocumentDeletionLog(models.Model):
@@ -1529,8 +1504,7 @@ class DocumentZone(models.Model):
         help_text="alternative URL path root for documents under this zone")
 
     def __unicode__(self):
-        return u'DocumentZone %s (%s)' % (self.document.get_absolute_url(),
-                                          self.document.title)
+        return f'DocumentZone {self.document.get_absolute_url()} ({self.document.title})'
 
     def save(self, *args, **kwargs):
         super(DocumentZone, self).save(*args, **kwargs)
@@ -1548,10 +1522,7 @@ def invalidate_zone_stack_cache(document, async=False):
     pks = [document.pk] + [parent.pk
                            for parent in document.get_topic_parents()]
     job = DocumentZoneStackJob()
-    if async:
-        invalidator = job.invalidate
-    else:
-        invalidator = job.refresh
+    invalidator = job.invalidate if async else job.refresh
     for pk in pks:
         invalidator(pk)
 
@@ -1559,10 +1530,7 @@ def invalidate_zone_stack_cache(document, async=False):
 def invalidate_zone_urls_cache(document, async=False):
     # if the document is a document zone
     job = DocumentZoneURLRemapsJob()
-    if async:
-        invalidator = job.invalidate
-    else:
-        invalidator = job.refresh
+    invalidator = job.invalidate if async else job.refresh
     try:
         if document.zone:
             # reset the cached list of zones of the document's locale
@@ -1781,9 +1749,7 @@ class Revision(models.Model):
         self.document.save()
 
     def __unicode__(self):
-        return u'[%s] %s #%s: %s' % (self.document.locale,
-                                     self.document.title,
-                                     self.id, self.content[:50])
+        return f'[{self.document.locale}] {self.document.title} #{self.id}: {self.content[:50]}'
 
     def get_section_content(self, section_id):
         """Convenience method to extract the content for a single section"""

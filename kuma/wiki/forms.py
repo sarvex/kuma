@@ -266,8 +266,7 @@ class RevisionForm(forms.ModelForm):
         if not self.cleaned_data['slug']:
             existing_slug = self.instance.document.slug
             self.cleaned_data['slug'] = self.instance.slug = existing_slug
-        cleaned_slug = self._clean_collidable('slug')
-        return cleaned_slug
+        return self._clean_collidable('slug')
 
     def clean_content(self):
         """Validate the content, performing any section editing if necessary"""
@@ -367,21 +366,23 @@ class RevisionValidationForm(RevisionForm):
     """Created primarily to disallow slashes in slugs during validation"""
 
     def clean_slug(self):
-        is_valid = True
         original = self.cleaned_data['slug']
 
+        is_valid = True
         # "/", "?", and " " disallowed in form input
-        if (u'' == original or
-                '/' in original or
-                '?' in original or
-                ' ' in original):
+        if (
+            original == u''
+            or '/' in original
+            or '?' in original
+            or ' ' in original
+        ):
             is_valid = False
             raise forms.ValidationError(SLUG_INVALID)
 
         # Append parent slug data, call super, ensure still valid
-        self.cleaned_data['slug'] = self.data['slug'] = (self.parent_slug +
-                                                         '/' +
-                                                         original)
+        self.cleaned_data['slug'] = self.data[
+            'slug'
+        ] = f'{self.parent_slug}/{original}'
         is_valid = (is_valid and
                     super(RevisionValidationForm, self).clean_slug())
 

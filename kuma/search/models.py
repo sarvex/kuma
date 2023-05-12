@@ -103,7 +103,7 @@ class Index(models.Model):
     @cached_property
     def prefixed_name(self):
         "The name to use for the search index in ES"
-        return '%s-%s' % (settings.ES_INDEX_PREFIX, self.name)
+        return f'{settings.ES_INDEX_PREFIX}-{self.name}'
 
     def populate(self):
         return WikiDocumentType.reindex_all(index=self, chunk_size=500)
@@ -238,5 +238,4 @@ class Filter(models.Model):
 
     def get_absolute_url(self):
         path = reverse('search', locale=settings.LANGUAGE_CODE)
-        return '%s%s?%s=%s' % (settings.SITE_URL, path,
-                               self.group.slug, self.slug)
+        return f'{settings.SITE_URL}{path}?{self.group.slug}={self.slug}'

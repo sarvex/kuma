@@ -18,8 +18,8 @@ class AttachmentsFeed(DocumentsFeed):
     def item_description(self, item):
         previous = item.get_previous()
         if previous is None:
-            return '<p>Created by: %s</p>' % item.creator.username
-        return "<p>Edited by %s: %s" % (item.creator.username, item.comment)
+            return f'<p>Created by: {item.creator.username}</p>'
+        return f"<p>Edited by {item.creator.username}: {item.comment}"
 
     def item_link(self, item):
         return self.request.build_absolute_uri(
@@ -29,7 +29,7 @@ class AttachmentsFeed(DocumentsFeed):
         return item.created
 
     def item_author_name(self, item):
-        return '%s' % item.creator
+        return f'{item.creator}'
 
     def item_author_link(self, item):
         return self.request.build_absolute_uri(item.creator.get_absolute_url())

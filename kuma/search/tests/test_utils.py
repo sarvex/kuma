@@ -33,7 +33,7 @@ class URLTests(KumaTestCase):
         url = QueryURLObject(original)
 
         eq_(url.merge_query_param('spam', 'eggs'), original)
-        eq_(url.merge_query_param('spam', 'spam'), original + '&spam=spam')
+        eq_(url.merge_query_param('spam', 'spam'), f'{original}&spam=spam')
 
         original = 'http://example.com/?foo=&spam=eggs&foo=bar'
         url = QueryURLObject(original)

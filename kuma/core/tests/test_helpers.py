@@ -142,7 +142,7 @@ class TestDateTimeFormat(UserTestCase):
 
     def test_today(self):
         """Expects shortdatetime, format: Today at {time}."""
-        date_today = datetime.today()
+        date_today = datetime.now()
         value_returned = unicode(datetimeformat(self.context, date_today))
         value_expected = 'Today at %s' % format_time(date_today,
                                                      format='short',
@@ -202,7 +202,7 @@ class TestDateTimeFormat(UserTestCase):
 
     def test_unknown_format(self):
         """Unknown format raises DateTimeFormatError."""
-        date_today = datetime.today()
+        date_today = datetime.now()
         assert_raises(DateTimeFormatError, datetimeformat, self.context,
                       date_today, format='unknown')
 

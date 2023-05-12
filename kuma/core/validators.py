@@ -78,7 +78,7 @@ def valid_javascript_identifier(identifier, escape=r'\u', ucd_cat=category):
             if len(segment) < 4:
                 return False
             try:
-                add_char(unichr(int('0x' + segment[:4], 16)))
+                add_char(unichr(int(f'0x{segment[:4]}', 16)))
             except Exception:
                 return False
             add_char(segment[4:])
@@ -90,16 +90,19 @@ def valid_javascript_identifier(identifier, escape=r'\u', ucd_cat=category):
 
     first_char = identifier[0]
 
-    if not ((first_char in valid_jsid_chars) or
-            (ucd_cat(first_char) in valid_jsid_categories_start)):
+    if (
+        first_char not in valid_jsid_chars
+        and ucd_cat(first_char) not in valid_jsid_categories_start
+    ):
         return False
 
-    for char in identifier[1:]:
-        if not ((char in valid_jsid_chars) or
-                (ucd_cat(char) in valid_jsid_categories)):
-            return False
-
-    return True
+    return all(
+        (
+            (char in valid_jsid_chars)
+            or (ucd_cat(char) in valid_jsid_categories)
+        )
+        for char in identifier[1:]
+    )
 
 
 def valid_jsonp_callback_value(value):

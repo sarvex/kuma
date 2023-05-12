@@ -43,7 +43,7 @@ def render_document(pk, cache_control, base_url, force=False):
     try:
         document.render(cache_control, base_url)
     except Exception as e:
-        subject = 'Exception while rendering document %s' % document.pk
+        subject = f'Exception while rendering document {document.pk}'
         mail_admins(subject=subject, message=e)
     return document.rendered_errors
 
@@ -68,16 +68,13 @@ def render_document_chunk(pks, cache_control='no-cache', base_url=None,
     Simple task to render a chunk of documents instead of one per each
     """
     logger = render_document_chunk.get_logger()
-    logger.info(u'Starting to render document chunk: %s' %
-                ','.join([str(pk) for pk in pks]))
+    logger.info(
+        f"Starting to render document chunk: {','.join([str(pk) for pk in pks])}"
+    )
     base_url = base_url or settings.SITE_URL
     for pk in pks:
-        # calling the task without delay here since we want to localize
-        # the processing of the chunk in one process
-        result = render_document(pk, cache_control, base_url, force=force)
-        if result:
-            logger.error(u'Error while rendering document %s with error: %s' %
-                         (pk, result))
+        if result := render_document(pk, cache_control, base_url, force=force):
+            logger.error(f'Error while rendering document {pk} with error: {result}')
     logger.info(u'Finished rendering of document chunk')
 
 
@@ -114,7 +111,7 @@ def render_stale_documents(log=None):
         # fetch a logger in case none is given
         log = render_stale_documents.get_logger()
 
-    log.info('Found %s stale documents' % stale_docs_count)
+    log.info(f'Found {stale_docs_count} stale documents')
     stale_pks = stale_docs.values_list('pk', flat=True)
 
     pre_task = acquire_render_lock.si()
@@ -144,8 +141,7 @@ def move_page(locale, slug, new_slug, email):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             transaction.rollback()
-            logging.error('Page move failed: no user with email address %s' %
-                          email)
+            logging.error(f'Page move failed: no user with email address {email}')
             return
         try:
             doc = Document.objects.get(locale=locale, slug=slug)
@@ -200,8 +196,8 @@ def move_page(locale, slug, new_slug, email):
     for moved_doc in [doc] + doc.get_descendants():
         moved_doc.schedule_rendering('max-age=0')
 
-    subject = 'Page move completed: ' + slug + ' (' + locale + ')'
-    full_url = settings.SITE_URL + '/' + locale + '/docs/' + new_slug
+    subject = f'Page move completed: {slug} ({locale})'
+    full_url = f'{settings.SITE_URL}/{locale}/docs/{new_slug}'
     message = """
 Page move completed.
 
@@ -314,7 +310,7 @@ def build_sitemaps():
 
             del info  # Force the gc to cleanup
 
-            sitemap_url = absolutify('/sitemaps/%s/sitemap.xml' % locale)
+            sitemap_url = absolutify(f'/sitemaps/{locale}/sitemap.xml')
             sitemap_parts.append(SITEMAP_ELEMENT % (sitemap_url, timestamp))
 
         del queryset  # Force the gc to cleanup

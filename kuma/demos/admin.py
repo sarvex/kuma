@@ -30,8 +30,7 @@ def censor_selected(modeladmin, request, queryset):
     # Do the deletion and return a None to display the change list view again.
     if request.POST.get('post'):
         censored_url = request.POST.get('censored_url', None)
-        n = queryset.count()
-        if n:
+        if n := queryset.count():
             for obj in queryset:
                 obj.censor(url=censored_url)
                 obj_display = force_unicode(obj)
@@ -93,8 +92,7 @@ def delete_selected(modeladmin, request, queryset):
     if request.POST.get('post'):
         if perms_needed:
             raise PermissionDenied
-        n = queryset.count()
-        if n:
+        if n := queryset.count():
             for obj in queryset:
                 obj_display = force_unicode(obj)
                 modeladmin.log_deletion(request, obj, obj_display)
@@ -133,11 +131,17 @@ def delete_selected(modeladmin, request, queryset):
     }
 
     # Display the confirmation page
-    return TemplateResponse(request, modeladmin.delete_selected_confirmation_template or [
-        "admin/%s/%s/delete_selected_confirmation.html" % (app_label, opts.object_name.lower()),
-        "admin/%s/delete_selected_confirmation.html" % app_label,
-        "admin/delete_selected_confirmation.html"
-    ], context, current_app=modeladmin.admin_site.name)
+    return TemplateResponse(
+        request,
+        modeladmin.delete_selected_confirmation_template
+        or [
+            f"admin/{app_label}/{opts.object_name.lower()}/delete_selected_confirmation.html",
+            f"admin/{app_label}/delete_selected_confirmation.html",
+            "admin/delete_selected_confirmation.html",
+        ],
+        context,
+        current_app=modeladmin.admin_site.name,
+    )
 
 delete_selected.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s")
 
