@@ -63,7 +63,7 @@ coverage = {extras = ["toml"], version = "^6"} # Use optional toml support
 pytest-watch = "^4.2.0"
 honcho = "^1.0.1"
 ipdb = "^0.13.9"
-ipython = "^7.31.1"
+ipython = "^8.13.2"
 model-bakery = "^1.4.0"
 
 [tool.black]
