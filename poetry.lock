@@ -1685,18 +1685,18 @@ testing = ["Django", "django-configurations (>=2.0)"]
 
 [[package]]
 name = "pytest-metadata"
-version = "1.11.0"
+version = "2.0.4"
 description = "pytest plugin for test session metadata"
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.7,<4.0"
 files = [
-    {file = "pytest-metadata-1.11.0.tar.gz", hash = "sha256:71b506d49d34e539cc3cfdb7ce2c5f072bea5c953320002c95968e0238f8ecf1"},
-    {file = "pytest_metadata-1.11.0-py2.py3-none-any.whl", hash = "sha256:576055b8336dd4a9006dd2a47615f76f2f8c30ab12b1b1c039d99e834583523f"},
+    {file = "pytest_metadata-2.0.4-py3-none-any.whl", hash = "sha256:acb739f89fabb3d798c099e9e0c035003062367a441910aaaf2281bc1972ee14"},
+    {file = "pytest_metadata-2.0.4.tar.gz", hash = "sha256:fcc653f65fe3035b478820b5284fbf0f52803622ee3f60a2faed7a7d3ba1f41e"},
 ]
 
 [package.dependencies]
-pytest = ">=2.9.0"
+pytest = ">=3.0.0,<8.0.0"
 
 [[package]]
 name = "pytest-rerunfailures"
@@ -2231,4 +2231,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1de5dd49e34d65a9fb480c8f014eeaf60253170781024e34f75a29abb13e76ff"
+content-hash = "f4c4f6b4aa4e9d1b80a217037b7b07b19095568a6b1f6f27d0f5777788c20004"
