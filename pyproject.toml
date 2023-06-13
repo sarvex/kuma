@@ -62,7 +62,7 @@ isort = "^5.10.1"
 coverage = {extras = ["toml"], version = "^7"} # Use optional toml support
 pytest-watch = "^4.2.0"
 honcho = "^1.0.1"
-ipdb = "^0.13.9"
+ipdb = "^0.13.13"
 ipython = "^8.13.2"
 model-bakery = "^1.4.0"
 
