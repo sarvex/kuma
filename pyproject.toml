@@ -59,7 +59,7 @@ dennis = "^0.9" # Used by `make localetest` to lint po files
 isort = "^5.10.1"
 
 # Pinned Dependencies
-coverage = {extras = ["toml"], version = "^6"} # Use optional toml support
+coverage = {extras = ["toml"], version = "^7"} # Use optional toml support
 pytest-watch = "^4.2.0"
 honcho = "^1.0.1"
 ipdb = "^0.13.9"
