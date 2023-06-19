@@ -741,22 +741,21 @@ pyflakes = ">=2.3.0,<2.4.0"
 
 [[package]]
 name = "flake8-isort"
-version = "4.1.1"
+version = "6.0.0"
 description = "flake8 plugin that integrates isort ."
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "flake8-isort-4.1.1.tar.gz", hash = "sha256:d814304ab70e6e58859bc5c3e221e2e6e71c958e7005239202fee19c24f82717"},
-    {file = "flake8_isort-4.1.1-py3-none-any.whl", hash = "sha256:c4e8b6dcb7be9b71a02e6e5d4196cefcef0f3447be51e82730fb336fff164949"},
+    {file = "flake8-isort-6.0.0.tar.gz", hash = "sha256:537f453a660d7e903f602ecfa36136b140de279df58d02eb1b6a0c84e83c528c"},
+    {file = "flake8_isort-6.0.0-py3-none-any.whl", hash = "sha256:aa0cac02a62c7739e370ce6b9c31743edac904bae4b157274511fc8a19c75bbc"},
 ]
 
 [package.dependencies]
-flake8 = ">=3.2.1,<5"
-isort = ">=4.3.5,<6"
-testfixtures = ">=6.8.0,<7"
+flake8 = "*"
+isort = ">=5.0.0,<6"
 
 [package.extras]
-test = ["pytest-cov"]
+test = ["pytest"]
 
 [[package]]
 name = "gevent"
@@ -1890,22 +1889,6 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
-name = "testfixtures"
-version = "6.18.3"
-description = "A collection of helpers and mock objects for unit tests and doc tests."
-optional = false
-python-versions = "*"
-files = [
-    {file = "testfixtures-6.18.3-py2.py3-none-any.whl", hash = "sha256:6ddb7f56a123e1a9339f130a200359092bd0a6455e31838d6c477e8729bb7763"},
-    {file = "testfixtures-6.18.3.tar.gz", hash = "sha256:2600100ae96ffd082334b378e355550fef8b4a529a6fa4c34f47130905c7426d"},
-]
-
-[package.extras]
-build = ["setuptools-git", "twine", "wheel"]
-docs = ["django", "django (<2)", "mock", "sphinx", "sybil", "twisted", "zope.component"]
-test = ["django", "django (<2)", "mock", "pytest (>=3.6)", "pytest-cov", "pytest-django", "sybil", "twisted", "zope.component"]
-
-[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -2167,4 +2150,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2e0130fc0b588abd38b8f04fa341b03da11fce239ff849e2fdb1ea1f32a1a025"
+content-hash = "b3d757fc59216ae7ab9ddd8547466bc917498bc8ee4528ed3dd8e2bd0788c1c4"
