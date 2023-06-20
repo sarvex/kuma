@@ -1192,17 +1192,17 @@ files = [
 
 [[package]]
 name = "model-bakery"
-version = "1.4.0"
+version = "1.12.0"
 description = "Smart object creation facility for Django."
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "model_bakery-1.4.0-py2.py3-none-any.whl", hash = "sha256:a89befaae667380f5e2352981d45fed36747941f5c3e9dffa962fc6ba8d661d1"},
-    {file = "model_bakery-1.4.0.tar.gz", hash = "sha256:c29fb821c81cda2c37dfbdcb1dd2218cda179ecb96c6edb6cd9cdaa146706d92"},
+    {file = "model_bakery-1.12.0-py3-none-any.whl", hash = "sha256:70e991dd503e3f1956632c621946bb8e71012172db740bab75cd9d2a447283a3"},
+    {file = "model_bakery-1.12.0.tar.gz", hash = "sha256:bfa5d118f91f08ef4694d4aaab168c98efc91dab086aee587e71d66a7001701a"},
 ]
 
 [package.dependencies]
-django = ">=2.2"
+django = ">=3.2"
 
 [[package]]
 name = "mozilla-django-oidc"
@@ -2150,4 +2150,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "53873acaefbca78e259bddb9f47b0ddf230c9b8df0c7ee6e471c49b7f1a2f74a"
+content-hash = "bcd16d2acada74b13d6b63d7a13ca158d22fcf51f4d95c1e83930d5ac63eb428"
