@@ -537,13 +537,13 @@ typing-extensions = ">=3.10.0.0"
 
 [[package]]
 name = "dj-email-url"
-version = "1.0.2"
+version = "1.0.6"
 description = "Use an URL to configure email backend settings in your Django Application."
 optional = false
 python-versions = "*"
 files = [
-    {file = "dj-email-url-1.0.2.tar.gz", hash = "sha256:838fd4ded9deba53ae757debef431e25fa7fca31d3948b3c4808ccdc84fab2b7"},
-    {file = "dj_email_url-1.0.2-py2.py3-none-any.whl", hash = "sha256:15148141c6ef123636e4ca3663e95231ed94ca5ed267e91977e5a4397be8b34c"},
+    {file = "dj-email-url-1.0.6.tar.gz", hash = "sha256:55ffe3329e48f54f8a75aa36ece08f365e09d61f8a209773ef09a1d4760e699a"},
+    {file = "dj_email_url-1.0.6-py2.py3-none-any.whl", hash = "sha256:cbd08327fbb08b104eac160fb4703f375532e4c0243eb230f5b960daee7a96db"},
 ]
 
 [[package]]
