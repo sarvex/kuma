@@ -1206,18 +1206,18 @@ django = ">=3.2"
 
 [[package]]
 name = "mozilla-django-oidc"
-version = "2.0.0"
+version = "3.0.0"
 description = "A lightweight authentication and access management library for integration with OpenID Connect enabled authentication services."
 optional = false
 python-versions = "*"
 files = [
-    {file = "mozilla-django-oidc-2.0.0.tar.gz", hash = "sha256:a8b2f27c69c122d2f4d801c3759761d33debf06ae9dabbab8aed82887bba3bb8"},
-    {file = "mozilla_django_oidc-2.0.0-py2.py3-none-any.whl", hash = "sha256:53c39755b667e8c5923b1dffc3c29673198d03aa107aa42ac86b8a38b4720c25"},
+    {file = "mozilla-django-oidc-3.0.0.tar.gz", hash = "sha256:a7d447af83cb5aa1671a24009b0ce6b2f0d259e9c58d8c88c7a8d0c27c05c04d"},
+    {file = "mozilla_django_oidc-3.0.0-py2.py3-none-any.whl", hash = "sha256:f535eeddf03698ad9fd89dd87037828e9c7d503771acef21f0509f6cc42fc875"},
 ]
 
 [package.dependencies]
 cryptography = "*"
-Django = ">=2.2"
+Django = ">=3.2"
 josepy = "*"
 requests = "*"
 
@@ -2162,4 +2162,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "f141469cbbe85af9c1c085c53bfb4ac4f45ab268bea10b208cd69bd459ee4ed0"
+content-hash = "b472d61ae541ed07f00161e45a3d0e767cc0de74e7584bcd1355894afcff59c7"
