@@ -53,7 +53,7 @@ ElasticMock = "^1.8.0"
 
 # Linting
 black = "^22.1.0"
-flake8 = "^3.9.2"
+flake8 = "^6.1.0"
 flake8-isort = "^6.0.0"
 dennis = "^0.9" # Used by `make localetest` to lint po files
 isort = "^5.10.1"
