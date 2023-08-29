@@ -629,21 +629,21 @@ files = [
 
 [[package]]
 name = "django-redis"
-version = "5.1.0"
+version = "5.3.0"
 description = "Full featured redis cache backend for Django."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "django-redis-5.1.0.tar.gz", hash = "sha256:98fb3d31633a1addea1aeb558a647359908bbcf78c0833f99496c5348fe3c1b4"},
-    {file = "django_redis-5.1.0-py3-none-any.whl", hash = "sha256:bf75bce0d6f65c3a6165dd6789506c8d22238f3bfaf7c4ad447e55afbc5b68cb"},
+    {file = "django-redis-5.3.0.tar.gz", hash = "sha256:8bc5793ec06b28ea802aad85ec437e7646511d4e571e07ccad19cfed8b9ddd44"},
+    {file = "django_redis-5.3.0-py3-none-any.whl", hash = "sha256:2d8660d39f586c41c9907d5395693c477434141690fd7eca9d32376af00b0aac"},
 ]
 
 [package.dependencies]
-Django = ">=2.2"
-redis = ">=3,<4"
+Django = ">=3.2"
+redis = ">=3,<4.0.0 || >4.0.0,<4.0.1 || >4.0.1"
 
 [package.extras]
-hiredis = ["redis[hiredis] (>=3,<4)"]
+hiredis = ["redis[hiredis] (>=3,!=4.0.0,!=4.0.1)"]
 
 [[package]]
 name = "docopt"
@@ -2145,4 +2145,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "b6008b4e2ebc3159451615fba0c9ff64eecc65f5671417b0818cc88d0a288075"
+content-hash = "d85476a47aad7ca78181caa049b68c264f2e3a6e348cd1bf9f92d648ec54ec67"
