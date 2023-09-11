@@ -1668,13 +1668,13 @@ six = ">=1.5"
 
 [[package]]
 name = "python-decouple"
-version = "3.5"
+version = "3.8"
 description = "Strict separation of settings from code."
 optional = false
 python-versions = "*"
 files = [
-    {file = "python-decouple-3.5.tar.gz", hash = "sha256:68e4b3fcc97e24bc90eecc514852d0bf970f4ff031f5f7a6728ddafa9afefcaf"},
-    {file = "python_decouple-3.5-py3-none-any.whl", hash = "sha256:011d3f785367c54a72cf8a07d3a7a48bb8cc1a0f8e6c70353ca5767ebf7c8c9d"},
+    {file = "python-decouple-3.8.tar.gz", hash = "sha256:ba6e2657d4f376ecc46f77a3a615e058d93ba5e465c01bbe57289bfb7cce680f"},
+    {file = "python_decouple-3.8-py3-none-any.whl", hash = "sha256:d0d45340815b25f4de59c974b855bb38d03151d81b037d9e3f463b0c9f8cbd66"},
 ]
 
 [[package]]
@@ -2108,4 +2108,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "9df057f560d0a9567bd5f0fe886fdc52f7ca685597e24c2077304fd00f09c98c"
+content-hash = "f9fb6a185757f1120c9573acd8ff5381bfa9589e51a888d0dd16b8da5eeec26b"
