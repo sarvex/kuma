@@ -56,7 +56,7 @@ black = "^23.7.0"
 flake8 = "^6.1.0"
 flake8-isort = "^6.0.0"
 dennis = "^0.9" # Used by `make localetest` to lint po files
-isort = "^5.10.1"
+isort = "^5.12.0"
 
 # Pinned Dependencies
 coverage = {extras = ["toml"], version = "^7"} # Use optional toml support
