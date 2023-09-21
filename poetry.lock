@@ -568,22 +568,23 @@ six = ">=1.2"
 
 [[package]]
 name = "django-ninja"
-version = "0.16.1"
+version = "0.22.2"
 description = "Django Ninja - Fast Django REST framework"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "django-ninja-0.16.1.tar.gz", hash = "sha256:039bc3324f2d38815241da791334acda0472c4429f772fe4af054d42dfe2af58"},
-    {file = "django_ninja-0.16.1-py3-none-any.whl", hash = "sha256:ab429b7d4f6cc665657a0b834ce8af93c18cca1f4d2300c43cb2c17ccf35f43e"},
+    {file = "django_ninja-0.22.2-py3-none-any.whl", hash = "sha256:c53b098a8190f373ea2605c276a6061d48b2626500a9c6b9916c503e4b4a20eb"},
+    {file = "django_ninja-0.22.2.tar.gz", hash = "sha256:913ebde7571d6a6968c9ac0b9e8a24680c46444d44fdd552f8831dbeede1292c"},
 ]
 
 [package.dependencies]
-Django = ">=2.0.13"
-pydantic = ">=1.6,<1.9"
+Django = ">=2.2"
+pydantic = ">=1.6,<2.0.0"
 
 [package.extras]
-doc = ["markdown-include", "mkdocs", "mkdocs-material"]
-test = ["black", "django-stubs", "flake8", "isort", "mypy", "pytest", "pytest-asyncio", "pytest-cov", "pytest-django"]
+dev = ["pre-commit"]
+doc = ["markdown-include", "mkdocs", "mkdocs-material", "mkdocstrings"]
+test = ["black", "django-stubs", "flake8", "isort", "mypy (==0.931)", "psycopg2-binary", "pytest", "pytest-asyncio", "pytest-cov", "pytest-django"]
 
 [[package]]
 name = "django-ratelimit"
@@ -2111,4 +2112,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "cd475be990e4fe2e3d61e2ab9bf26a942eb3b76ba2b3bbed81472995011fa94b"
+content-hash = "cfd87ee1274005fffaa97abc1576a6ad217fa7da614e9f0e5da49fe8e53bec8f"
