@@ -1567,17 +1567,17 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "pytest-base-url"
-version = "1.4.2"
+version = "2.0.0"
 description = "pytest plugin for URL based testing"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7,<4.0"
 files = [
-    {file = "pytest-base-url-1.4.2.tar.gz", hash = "sha256:7f1f32e08c2ee751e59e7f5880235b46e83496adc5cba5a01ca218c6fe81333d"},
-    {file = "pytest_base_url-1.4.2-py2.py3-none-any.whl", hash = "sha256:8b6523a1a3af73c317bdae97b722dfb55a7336733d1ad411eb4a4931347ba77a"},
+    {file = "pytest-base-url-2.0.0.tar.gz", hash = "sha256:e1e88a4fd221941572ccdcf3bf6c051392d2f8b6cef3e0bc7da95abec4b5346e"},
+    {file = "pytest_base_url-2.0.0-py3-none-any.whl", hash = "sha256:ed36fd632c32af9f1c08f2c2835dcf42ca8fcd097d6ed44a09f253d365ad8297"},
 ]
 
 [package.dependencies]
-pytest = ">=2.7.3"
+pytest = ">=3.0.0,<8.0.0"
 requests = ">=2.9"
 
 [[package]]
@@ -2117,4 +2117,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4d7f1103cdfe8e7bfc8d679702ce783513d575224986f08f1a519e7750a60e92"
+content-hash = "5317159a195f63f6419b6f5e1e0e9f87d509a9c1b8804188010a78e391a7691b"
