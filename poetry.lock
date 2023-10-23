@@ -588,13 +588,13 @@ test = ["black", "django-stubs", "flake8", "isort", "mypy (==0.931)", "psycopg2-
 
 [[package]]
 name = "django-ratelimit"
-version = "2.0.0"
+version = "4.1.0"
 description = "Cache-based rate-limiting for Django."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.7"
 files = [
-    {file = "django-ratelimit-2.0.0.tar.gz", hash = "sha256:ddb6bd68a7a25fab335a0441671681ce9993167e640a2301a2e0e07ce9dd46fb"},
-    {file = "django_ratelimit-2.0.0-py2.py3-none-any.whl", hash = "sha256:40dd23dcdda413d2199bb88b4d9151bf66ea19586b2047ada313ddcf77e2959c"},
+    {file = "django-ratelimit-4.1.0.tar.gz", hash = "sha256:555943b283045b917ad59f196829530d63be2a39adb72788d985b90c81ba808b"},
+    {file = "django_ratelimit-4.1.0-py2.py3-none-any.whl", hash = "sha256:d047a31cf94d83ef1465d7543ca66c6fc16695559b5f8d814d1b51df15110b92"},
 ]
 
 [[package]]
@@ -2133,4 +2133,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5831e64ed901aa4bdf9a5c8f954117471d575c12ea3fba67364aa209aca37bee"
+content-hash = "3852842b4514d3ae1ee570ee0941d129fd6eb3985d44414ce0495a7b208439bb"
