@@ -5,7 +5,7 @@
 Babel==2.9.1
 docutils==0.20.1
 Jinja2==3.1.2
-pytz==2018.5
+pytz==2023.3.post1
 
 # These requirements are unique to docs
 Pygments==2.16.1
