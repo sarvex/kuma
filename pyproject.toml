@@ -37,7 +37,7 @@ django-ninja = "^0.22.2"
 
 [tool.poetry.dev-dependencies]
 # Development Tools
-werkzeug = "^2.3" # Enables runserver_plus from django-extensions
+werkzeug = "^3.0" # Enables runserver_plus from django-extensions
 
 # Testing
 braceexpand = "^0.1.7"
