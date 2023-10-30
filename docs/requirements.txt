@@ -2,7 +2,7 @@
 # used by ReadTheDocs to set up the documentation rendering environment
 
 # These should stay synced with other requirements files
-Babel==2.9.1
+Babel==2.13.1
 docutils==0.20.1
 Jinja2==3.1.2
 pytz==2023.3.post1
