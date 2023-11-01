@@ -630,13 +630,13 @@ python-dateutil = "*"
 
 [[package]]
 name = "elasticsearch"
-version = "7.16.0"
+version = "7.17.9"
 description = "Python client for Elasticsearch"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 files = [
-    {file = "elasticsearch-7.16.0-py2.py3-none-any.whl", hash = "sha256:9a5a2fd53a4fce28f15f358ab13fbcfb06f47fb2c7400ea89c10d6fd3f236ecd"},
-    {file = "elasticsearch-7.16.0.tar.gz", hash = "sha256:d7f8665715ad80e3e99e42388bcc49c1b06162f72acfa1f8febe2baf5570b0ed"},
+    {file = "elasticsearch-7.17.9-py2.py3-none-any.whl", hash = "sha256:0e2454645dc00517dee4c6de3863411a9c5f1955d013c5fefa29123dadc92f98"},
+    {file = "elasticsearch-7.17.9.tar.gz", hash = "sha256:66c4ece2adfe7cc120e2b6a6798a1fd5c777aecf82eec39bb95cef7cfc7ea2b3"},
 ]
 
 [package.dependencies]
@@ -2113,4 +2113,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "b720457f0c73f0993b8e3afe43b294d24d449c2a1fbbd956803e698686310ccb"
+content-hash = "49776b7903e99f42bda511b6f7d6baa3ce053feb2d433a4954e333d0fdf9969c"
