@@ -711,13 +711,13 @@ pyflakes = ">=3.1.0,<3.2.0"
 
 [[package]]
 name = "flake8-isort"
-version = "6.0.0"
-description = "flake8 plugin that integrates isort ."
+version = "6.1.1"
+description = "flake8 plugin that integrates isort"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "flake8-isort-6.0.0.tar.gz", hash = "sha256:537f453a660d7e903f602ecfa36136b140de279df58d02eb1b6a0c84e83c528c"},
-    {file = "flake8_isort-6.0.0-py3-none-any.whl", hash = "sha256:aa0cac02a62c7739e370ce6b9c31743edac904bae4b157274511fc8a19c75bbc"},
+    {file = "flake8_isort-6.1.1-py3-none-any.whl", hash = "sha256:0fec4dc3a15aefbdbe4012e51d5531a2eb5fa8b981cdfbc882296a59b54ede12"},
+    {file = "flake8_isort-6.1.1.tar.gz", hash = "sha256:c1f82f3cf06a80c13e1d09bfae460e9666255d5c780b859f19f8318d420370b3"},
 ]
 
 [package.dependencies]
@@ -2113,4 +2113,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "33130a78cac5a181a3de4af2ff360e36ec3333bb04661b5481a90c34532c0801"
+content-hash = "6fc73c5246aa2827e23fa3d66b16c6326e37b3ffc357c429fde626332d256d72"
