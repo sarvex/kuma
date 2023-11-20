@@ -33,7 +33,7 @@ psycopg2-binary = "^2.9.9"
 sentry-sdk = "^1.35.0"
 whitenoise = "^6.6.0"
 mozilla-django-oidc = "^3.0.0"
-django-ninja = "^0.22.2"
+django-ninja = "^1.0.1"
 
 [tool.poetry.dev-dependencies]
 # Development Tools
