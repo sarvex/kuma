@@ -11,7 +11,7 @@ documentation = "https://kuma.readthedocs.io"
 [tool.poetry.dependencies]
 python = "^3.10"
 
-celery = "^5.3.6"
+celery = "^5.4.0"
 dj-database-url = "^2.1.0"
 dj-email-url = "^1"
 django = "^5"
